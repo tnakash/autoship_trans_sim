@@ -1,0 +1,9 @@
+sim_setting:
+  start_year: 2021
+  end_year: 2070
+
+ship_demand:
+  initial_number: 5200
+  annual_growth: 1.05
+
+ship_age: 25

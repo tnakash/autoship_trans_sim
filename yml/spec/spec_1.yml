@@ -72,7 +72,7 @@ Remote:
     ro_cost: 0
     rm_cost: 1
   NaN:
-    num_so: 1
+    num_so_ratio: 0
     com_cost: 1
     sec_cost: 1
     ro_cost: 0

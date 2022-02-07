@@ -1,0 +1,30 @@
+capex_execution:
+  initial_number: '200000'
+  price: '0.99'
+capex_planning:
+  initial_number: '300000'
+  price: '0.99'
+capex_remote_monitoring:
+  initial_number: '50000'
+  price: '0.99'
+capex_remote_operation:
+  initial_number: '200000'
+  price: '0.99'
+capex_situation_awareness:
+  initial_number: '200000'
+  price: '0.99'
+exp_loss:
+  initial_number: '300000'
+  price: '1.01'
+opex_communication:
+  initial_number: '120000'
+  price: '0.99'
+opex_cyber_security:
+  initial_number: '12000'
+  price: '1.01'
+seafarer_cost:
+  initial_number: '200000'
+  price: '1.01'
+shore_operator_cost:
+  initial_number: '100000'
+  price: '1.01'
