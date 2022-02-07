@@ -1,0 +1,79 @@
+SituationAwareness:
+  FullAuto:
+    num_sf: 0
+    sec_cost: 1.1
+    com_cost: 1
+    acc_ratio: 0.5
+    sa_cost: 1
+  SemiAuto:
+    num_sf: 1
+    sec_cost: 1.05
+    com_cost: 1
+    acc_ratio: 0.75
+    sa_cost: 0.5
+  AsIs:
+    num_sf: 2
+    sec_cost: 1
+    com_cost: 1
+    acc_ratio: 1
+    sa_cost: 0
+
+Planning:
+  FullAuto:
+    num_sf: 0
+    sec_cost: 1.5
+    com_cost: 1.5
+    acc_ratio: 0.4
+    pl_cost: 1
+  SemiAuto:
+    num_sf: 2
+    sec_cost: 1.2
+    com_cost: 1.2
+    acc_ratio: 0.6
+    pl_cost: 0.5
+  AsIs:
+    num_sf: 4
+    sec_cost: 1
+    com_cost: 1
+    acc_ratio: 1
+    pl_cost: 0
+
+Control:
+  FullAuto:
+    num_sf: 0
+    sec_cost: 2
+    com_cost: 2
+    acc_ratio: 0.5
+    ex_cost: 1
+  SemiAuto:
+    num_sf: 1
+    sec_cost: 1.5
+    com_cost: 1.5
+    acc_ratio: 0.75
+    ex_cost: 0.5
+  AsIs:
+    num_sf: 2
+    sec_cost: 1
+    com_cost: 1
+    acc_ratio: 1
+    ex_cost: 0
+
+Remote:
+  Control:
+    num_so_ratio: 1
+    com_cost: 5
+    sec_cost: 5
+    ro_cost: 1
+    rm_cost: 0
+  Monitor:
+    num_so_ratio: 0.5
+    com_cost: 2
+    sec_cost: 2
+    ro_cost: 0
+    rm_cost: 1
+  NaN:
+    num_so: 1
+    com_cost: 1
+    sec_cost: 1
+    ro_cost: 0
+    rm_cost: 0
