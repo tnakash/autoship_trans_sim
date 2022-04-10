@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
+import streamlit as st
 
 def show_tradespace(cost, spec, i, annual_cost, ac_loss, sf_sum, fuel_cost):
-    if cost.Year[i]%10==0:
+    if cost.Year[i]%5==0:
         fig = plt.figure(figsize=(18,5))
         ax1 = fig.add_subplot(1, 3, 1)
         ax2 = fig.add_subplot(1, 3, 2)
@@ -22,7 +23,9 @@ def show_tradespace(cost, spec, i, annual_cost, ac_loss, sf_sum, fuel_cost):
             ax1.text(annual_cost[j], ac_loss[j], label)
             ax2.text(annual_cost[j], sf_sum[j], label)
             ax3.text(annual_cost[j], fuel_cost[j], label)
-        plt.show()
+        # plt.show()
+        st.pyplot(fig)
+
 
 # Show Outputs
 def show_output(result, labels1, spec):
@@ -50,7 +53,8 @@ def show_output(result, labels1, spec):
     ax4.stackplot(result.Year, result.LabourCost, result.LossDamage, result.FuelCost, result.OpeCost, result.OnboardAsset, result.ShoreAsset, labels=labels4)
     ax4.set_title("Cost for Each Vessel")
     ax4.legend(loc="upper right")
-    plt.show()
+    # plt.show()
+    st.pyplot(fig)
 
     for s in labels1:
         i = spec.index[spec.ship_type == s].tolist()[0]
