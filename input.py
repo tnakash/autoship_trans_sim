@@ -1,9 +1,12 @@
+from random import random
 import pandas as pd
 import yaml
 import itertools
+import random
 
 homedir = ""
 FILE_ERROR_MESSAGE = 'CANNOT FIND THE FILE'
+UNCERTAINTY = 150
 
 # Set scenario by yaml
 def get_scenario(scenario='scenario_1'):
@@ -33,7 +36,7 @@ def get_scenario(scenario='scenario_1'):
     Newbuilding = [0] * sim_years
     Scrap = [0] * sim_years    
     for i in range (sim_years):
-        NumofShip[i] = int(NumofShip[i-1] * annual_growth) if i>0 else ship_initial
+        NumofShip[i] = int(NumofShip[i-1] * annual_growth) + random.randint(-UNCERTAINTY,UNCERTAINTY) if i>0 else ship_initial
         Scrap[i]= int(ship_initial/ship_age) if i <= ship_age else Newbuilding[i-ship_age]
         Newbuilding[i] = NumofShip[i] + Scrap[i] - NumofShip[i-1] if i>0 else int(ship_initial/ship_age)
 
@@ -102,7 +105,7 @@ def get_cost(Year, cost='cost_1'):
         Exec[i] = int(Exec[i-1] * ex_growth) if i>0 else ex_initial
         RemOpe[i] = int(RemOpe[i-1] * ro_growth) if i>0 else ro_initial
         RemMon[i] = int(RemMon[i-1] * rm_growth) if i>0 else rm_initial
-        Fuel[i] = int(Fuel[i-1] * fc_growth) if i>0 else fc_initial
+        Fuel[i] = int(Fuel[i-1] * fc_growth) * random.gauss(1,0.1) if i>0 else fc_initial
     
     df_cost = pd.DataFrame(zip(Year, Seafarer, ShoreOperator, ExpLoss, CS, Comm, Situ, Plan, Exec, RemOpe, RemMon,Fuel), columns = column)
     return df_cost
