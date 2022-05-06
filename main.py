@@ -1,21 +1,16 @@
 from Agent import ShipOwner, Investor, PolicyMaker
 
-from output import show_tradespace_general, show_output
-from input import *
-from result import *
-
+from output import show_tradespace_general
+from input import get_yml, get_scenario, set_scenario
 from calculate import calculate_cost, calculate_tech, get_tech_ini, calculate_TRL_cost
 
 import streamlit as st
-import numpy as np
 import pandas as pd
 from PIL import Image
-import csv
-import sys
 
 import altair as alt
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 
 def main():    
     img = Image.open('fig/logo.png')
@@ -77,6 +72,7 @@ def main():
     tech_yml = get_yml('tech')
     ship_spec_yml = get_yml('ship_spec')
     tech = get_tech_ini(tech_yml)
+    st.write(ship_spec_yml)
     
     if 'Year' not in st.session_state:
         st.session_state['Year'] = start_year
@@ -85,6 +81,7 @@ def main():
     if next_step:
         if st.session_state['Year'] == start_year:
             st.write("Simulation Started!")
+            
         else:
             # Read temporary saved parameters
             spec = pd.read_csv('csv/spec'+casename+'.csv', index_col=0)

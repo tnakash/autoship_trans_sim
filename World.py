@@ -97,18 +97,16 @@ class Tech_list():
             self.integ_factor[i] = 1+(self.integ_factor[i]-1)*(self.manu_max[i]-self.Mexp[i])/self.manu_max[i] if self.manu_max[i] > self.Mexp[i] else 1
             self.accident_ratio[i] = self.accident_ratio_base[i] * (self.Oexp[i]+1) ** (-self.ope_safety_b)
 
-    def read_csv(self, csv):
-        self.tech_list = csv[0]
-        self.tech_cost = csv[1]
-        self.integ_factor = csv[2]
-        self.TRL = csv[3]
-        self.Rexp = csv[4]
-        self.Mexp = csv[5]
-        self.Oexp = csv[6]
-        self.tech_cost_min = csv[7]
-        self.accident_ratio = csv[8]
-        self.accident_ratio_base = csv[9]
-        self.accident_ratio_ini = csv[10]
+    def reset_fromdf(self, df):
+        # change unconstant parameters only
+        self.tech_cost = df['tech_cost'].to_list()
+        self.integ_factor = df['integ_factor'].to_list()
+        self.TRL = df['TRL'].to_list()
+        self.Rexp = df['Rexp'].to_list()
+        self.Mexp = df['Mexp'].to_list()
+        self.Oexp = df['Oexp'].to_list()
+        self.accident_ratio = df['self.accident_ratio'].to_list()
+        self.accident_ratio_base = df['self.accident_ratio_base'].to_list()
 
 class Ship_list():
     def __ini__(self, cost, ship_spec):

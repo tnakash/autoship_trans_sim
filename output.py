@@ -1,7 +1,5 @@
 import matplotlib.pyplot as plt
-from pyrsistent import b
 import streamlit as st
-from matplotlib.ticker import MaxNLocator
 
 def show_tradespace_general(a, b, alabel, blabel, title, list, selected_index):
     fig = plt.figure(figsize=(10,10))
