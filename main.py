@@ -18,7 +18,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def main():    
-    img = Image.open('/Users/nakashima/Pictures/logo.png')
+    img = Image.open('fig/logo.png')
     st.image(img, width = 300)
     st.markdown('#### Scenario Setting')
 
