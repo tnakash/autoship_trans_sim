@@ -247,7 +247,7 @@ def calculate_TRL_cost(tech, param):
         TRL_need[i] = param.rd_need_TRL # * tech.TRL[i]
         if (tech.Oexp[i] * param.ope_TRL_factor + tech.Rexp[i] * param.rd_TRL_factor) - TRL_need[i] > 0 and tech.TRL[i] < 9:
             tech.TRL[i] += 1
-            tech.accident_ratio_base[i] -= param.acc_reduction_full * trl_rate(tech.TRL[i])
+            tech.accident_ratio_base[i] = tech.accident_ratio_ini[i] - param.acc_reduction_full * trl_rate(tech.TRL[i])
             tech.Rexp[i] = tech.Rexp[i] - param.rd_need_TRL if tech.Rexp[i] - param.rd_need_TRL > 0 else 0
 
         tech.Rexp[i] += param.randd_base # Base investment (TBD)    
