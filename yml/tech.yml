@@ -1,0 +1,39 @@
+Berth:
+  min_cost: 34000
+  TRL_ini: 4
+  R&D_exp: 0
+  Man_exp: 0
+  Ope_exp: 0
+  accident: 96
+
+Navi:
+  min_cost: 34000
+  TRL_ini: 5
+  R&D_exp: 0
+  Man_exp: 0
+  Ope_exp: 0
+  accident: 78
+
+Moni:
+  min_cost: 136000
+  TRL_ini: 7
+  R&D_exp: 0
+  Man_exp: 0
+  Ope_exp: 0
+  accident: 32
+
+Others:
+  tech_integ_factor: 1.2 # MAX
+  ope_max: 10000 # [times (year*ship)]
+  manu_max: 150 # [times (ship)]
+  ope_safety_b: 0.075 # ope_max -> 1/2
+  ope_TRL_factor: 0.4 # [USD/times]
+  rd_TRL_factor: 1 # [USD/y]
+  rd_need_TRL: 20000000 # [USD/TRL]
+  randd_base: 1000000 # [USD/y]
+  acc_reduction_full: 0.9 # Human Erron Rate [-]
+  trl_reduction:
+    TRL9: 1
+    TRL8: 0.5
+    TRL7: 0.25    
+  TRLgap_semi: 3

@@ -1,9 +1,26 @@
 import matplotlib.pyplot as plt
+from pyrsistent import b
 import streamlit as st
 from matplotlib.ticker import MaxNLocator
 
-def show_tradespace(cost, spec, i, annual_cost, ac_loss, sf_sum, fuel_cost, selected_index):
-    if cost.Year[i]%5==0:
+def show_tradespace_general(a, b, alabel, blabel, title, list, selected_index):
+    fig = plt.figure(figsize=(10,10))
+        
+    plt.scatter(x=a, y=b)
+    plt.scatter(x=a[selected_index], y=b[selected_index],
+        label=f'Selected (Config{selected_index})',
+        marker='*', c='yellow', edgecolor='k', s=150)
+    plt.title(title)
+    plt.xlabel(alabel)
+    plt.ylabel(blabel)
+    for j, label in enumerate(list):
+        plt.annotate(label, (a[j], b[j]))
+    
+    plt.show()
+    st.pyplot(fig)
+
+def show_tradespace(i, annual_cost, ac_loss, sf_sum, fuel_cost, selected_index):
+    if i%10==0: # Need to change
         fig = plt.figure(figsize=(18,5))
         ax1 = fig.add_subplot(1, 3, 1)
         ax2 = fig.add_subplot(1, 3, 2)
@@ -12,15 +29,15 @@ def show_tradespace(cost, spec, i, annual_cost, ac_loss, sf_sum, fuel_cost, sele
         ax1.scatter(x=annual_cost[selected_index], y=ac_loss[selected_index],
             # label=f'Selected ({selected_ship[-1]})',
             marker='*', c='yellow', edgecolor='k', s=150)
-        ax1.set_title("Economy vs Safety at " + str(cost.Year[i]))
+        ax1.set_title("Economy vs Safety at " + str(i))
         ax1.set_xlabel("Annual Cost (USD)")
-        ax1.set_ylabel("Expected Accident Loss (USD)")
+        ax1.set_ylabel("Expected Accident (-)")
 
         ax2.scatter(x=annual_cost, y=sf_sum)
         ax2.scatter(x=annual_cost[selected_index], y=sf_sum[selected_index],
             # label=f'Selected ({selected_ship[-1]})',
             marker='*', c='yellow', edgecolor='k', s=150)
-        ax2.set_title("Economy vs Labour at " + str(cost.Year[i]))
+        ax2.set_title("Economy vs Labour at " + str(i))
         ax2.set_xlabel("CAPEX (USD)")
         ax2.set_ylabel("Num of Seafarer (person)")
         
@@ -28,17 +45,16 @@ def show_tradespace(cost, spec, i, annual_cost, ac_loss, sf_sum, fuel_cost, sele
         ax3.scatter(x=annual_cost[selected_index], y=fuel_cost[selected_index],
             # label=f'Selected ({selected_ship[-1]})',
             marker='*', c='yellow', edgecolor='k', s=150)
-        ax3.set_title("Economy vs Environment at " + str(cost.Year[i]))
+        ax3.set_title("Economy vs Environment at " + str(i))
         ax3.set_xlabel("CAPEX (USD)")
         ax3.set_ylabel("Fuel Cost (USD)")
         
-        for j, label in enumerate(spec.index.values):
-            ax1.text(annual_cost[j], ac_loss[j], label)
-            ax2.text(annual_cost[j], sf_sum[j], label)
-            ax3.text(annual_cost[j], fuel_cost[j], label)
-        # plt.show()
+        # for j, label in enumerate(spec.index.values):
+        #     ax1.text(annual_cost[j], ac_loss[j], label)
+        #     ax2.text(annual_cost[j], sf_sum[j], label)
+        #     ax3.text(annual_cost[j], fuel_cost[j], label)
+        plt.show()
         st.pyplot(fig)
-
 
 # Show Outputs
 def show_output(result, labels1, spec):
@@ -47,8 +63,9 @@ def show_output(result, labels1, spec):
     ax2 = fig.add_subplot(2, 2, 2)
     ax3 = fig.add_subplot(2, 2, 3)
     ax4 = fig.add_subplot(2, 2, 4)
+    label_config = ['config0', 'config1', 'config2', 'config3', 'config4', 'config5', 'config6', 'config7', 'config8', 'config9', 'config10', 'config11']
 
-    ax1.stackplot(result.Year, [result[s] for s in labels1], labels=labels1)
+    ax1.stackplot(result.year, [result[s] for s in label_config], labels=label_config)
 #    ax1.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax1.set_title("Number of ships for each autonomous level")
     ax1.legend(loc="upper left")

@@ -1,0 +1,56 @@
+OPEX:
+    crew_cost: 945000
+    store_cost: 289000
+    maintenance_cost: 268000
+    insurance_cost: 313000
+    general_cost: 269000
+    dock_cost: 420000
+
+CAPEX:
+    material_cost: 906667 
+    integrate_cost: 453333 
+
+VOYEX:
+    port_call: 600000
+    fuel_cost_ME: 1840000
+    fuel_cost_AE: 280000
+
+AddCost:
+    SCC_Capex: 46889
+    SCC_Opex: 22361
+    SCC_Personal: 265778
+    Mnt_in_port: 155250
+
+Others:
+    navi_crew_factor: 0.39 # Just to confirm
+    moni_crew_factor: 0.56
+    cook_crew_factor: 0.05
+    mainte_amount: 67000
+    capex_material_ratio: 0.667
+    accom_reduce_navi: 0.025 # Just to confirm
+    accom_reduce_moni: 0.025
+    num_crew_navi: 4
+    num_crew_moni: 14
+    num_crew_cook: 2
+    num_crew_all: 20
+    berth_pilot_save: 60000 # [USD]
+    integ_a: 725333 # [USD]
+    integ_b: 0.138
+    ME_no_bridge_rate: 0.036
+    AE_crew_rate: 0.4
+
+ManningCost:
+  Captain: 162000
+  First_Officer: 108000
+  Second_Officer: 90000
+  Third_Officer: 70000
+  Boatswain: 24800
+  A_seaman: 24800
+  O_seaman: 24800
+  Chief_Eng: 135000
+  Second_Eng: 63000
+  Third_Eng: 53000
+  MinaraiA: 40000
+  MinaraiB: 40000
+  Cook: 40919
+  Messman: 15480
