@@ -23,7 +23,7 @@ Moni:
   accident: 32
 
 Others:
-  tech_integ_factor: 1.2 # MAX
+  tech_integ_factor: 1.2
   integ_a: 725333 # [USD] not in use
   integ_b: 0.138
   ope_max: 10000 # [times (year*ship)]

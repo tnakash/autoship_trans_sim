@@ -5,4 +5,4 @@ This is a prototype of Autonomous Ship Transition Simulator for GTL 2022.</br>
 streamlit run main.py
 """
 
-### 追って追記
+### 追記

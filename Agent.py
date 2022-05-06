@@ -27,7 +27,7 @@ class Investor():
 
 class ShipOwner:
     # def __init__(self, economy, environment, safety, labour, learning):
-    def __init__(self, economy=1.0, safety=0.0, current_fleet=None, num_newbuilding=None):
+    def __init__(self, economy=1.0, safety=0.0, current_fleet=None, num_newbuilding=None, estimated_loss=10000000):
     # def __init__(self, economy=1.0, environment=0.0, safety=0.0, labour=0.0, current_fleet=None, num_newbuilding=None):
         self.economy = economy
         # self.environment = environment
@@ -35,6 +35,7 @@ class ShipOwner:
         # self.labour = labour
         self.fleet = current_fleet
         self.num_newbuiding = num_newbuilding
+        self.accident_loss = estimated_loss
 
     def reset(self, economy, safety, current_fleet):
     # def reset(self, economy, environment, safety, labour):
@@ -49,7 +50,7 @@ class ShipOwner:
         labour_cost, fuel_cost, capex_sum, opex_sum, voyex_sum, addcost_sum, accident_sum = self.calculate_assumption(spec)
         annual_cost = opex_sum + capex_sum + voyex_sum + addcost_sum
 
-        select_parameter = annual_cost * self.economy + accident_sum * self.safety * 10000000 - spec['subsidy']
+        select_parameter = annual_cost * self.economy + accident_sum * self.safety * self.accident_loss - spec['subsidy']
         select = select_parameter.idxmin()
 
         return select
