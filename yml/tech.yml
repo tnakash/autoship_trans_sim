@@ -24,6 +24,8 @@ Moni:
 
 Others:
   tech_integ_factor: 1.2 # MAX
+  integ_a: 725333 # [USD] not in use
+  integ_b: 0.138
   ope_max: 10000 # [times (year*ship)]
   manu_max: 150 # [times (ship)]
   ope_safety_b: 0.075 # ope_max -> 1/2
@@ -35,5 +37,4 @@ Others:
   trl_reduction:
     TRL9: 1
     TRL8: 0.5
-    TRL7: 0.25    
-  TRLgap_semi: 3
+    TRL7: 0.25

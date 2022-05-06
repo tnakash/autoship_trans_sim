@@ -45,7 +45,8 @@ def main():
     # subsidy_amount = st.sidebar.slider('Subsidy Amount',0,200000,100000)
     subsidy_RandD = st.sidebar.slider('Subsidy Amount (R&D)',0,20000000,10000000)
     subsidy_Adoption =  st.sidebar.slider('Subsidy Amount (Adoption)',0,20000000,0)
-
+    sub_list = st.sidebar.slider('Subsidy from Config. ',1,11,(9,11))
+    
     # Selecting params for Investors        
     st.sidebar.markdown('### Manufacturer (R&D Investor))')
     st.sidebar.write("Technology type and Amount of investment")    
@@ -71,7 +72,7 @@ def main():
     cost_yml = get_yml('cost')
     tech_yml = get_yml('tech')
     ship_spec_yml = get_yml('ship_spec')
-    tech = get_tech_ini(tech_yml)
+    tech, param = get_tech_ini(tech_yml)
     st.write(ship_spec_yml)
     
     if 'Year' not in st.session_state:
@@ -100,14 +101,14 @@ def main():
             tech = Manufacturer.invest(tech)
             
             # World (Technology Development)
-            tech = calculate_tech(tech, Owner.fleet, ship_age)
-            tech = calculate_TRL_cost(tech)
+            tech = calculate_tech(tech, param, Owner.fleet, ship_age)
+            tech = calculate_TRL_cost(tech, param)
             
             # World (Cost Reduction and Safety Improvement)
             spec_current = calculate_cost(ship_spec_yml, cost_yml, start_year+i, tech)
             
             # Regulator (Subsidy for Adoption)
-            spec_current = Regulator.subsidize_Adoption(spec_current,num_newbuilding.ship[i])
+            spec_current = Regulator.subsidize_Adoption(spec_current,num_newbuilding.ship[i],sub_list)
             
             # Ship Owner (Adoption and Purchase)
             select = Owner.select_ship(spec_current)

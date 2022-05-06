@@ -1,40 +1,5 @@
 import pandas as pd
 
-# Later goes to YML file ...
-navi_crew_factor = 0.39 # Just to confirm
-moni_crew_factor = 0.56
-cook_crew_factor = 0.05
-
-mainte_amount = 67000
-capex_material_ratio = 0.667
-
-accom_reduce_navi = 0.025 # Just to ßconfirm
-accom_reduce_moni = 0.025
-
-num_crew_navi = 4
-num_crew_moni = 14
-num_crew_cook = 2
-num_crew_all = num_crew_navi + num_crew_moni + num_crew_cook
-
-ope_TRL_factor = 0.4 # [USD/times]
-rd_TRL_factor = 1 # [USD/y]
-rd_need_TRL = 20000000 # [USD/TRL]
-randd_base = 1000000 # [USD/y]
-
-berth_pilot_save = 60000 # [USD]
-acc_ratio_min = 0.1 # reducing ratio of human error
-
-ope_safety_b = 0.075 # ope_max -> 1/2
-ope_max = 10000 # [times (year*ship)]
-
-integ_a = 725333 # [USD]
-integ_b = 0.138 # 
-tech_integ_factor = 1.2 # MAX
-manu_max = 150 # [times (ship)]
-
-TRLgap_semi = 3
-acc_reduction_full = 0.9
-
 def calculate_cost(ship_spec, cost, year, tech):
 
     tech_list = ['Berth', 'Navi', 'Moni']
@@ -88,6 +53,21 @@ def calculate_cost(ship_spec, cost, year, tech):
     acc_ratio_berth = [0] * len(ship_spec)
     acc_ratio_navi = [0] * len(ship_spec)
     acc_ratio_moni = [0] * len(ship_spec)
+    
+    berth_pilot_save = cost['Others']['berth_pilot_save']
+    
+    num_crew_navi = cost['Others']['num_crew_navi']
+    num_crew_moni = cost['Others']['num_crew_moni']
+    num_crew_cook = cost['Others']['num_crew_cook']
+    num_crew_all = num_crew_navi + num_crew_moni + num_crew_cook
+    
+    navi_crew_factor = cost['Others']['navi_crew_factor']
+    moni_crew_factor = cost['Others']['moni_crew_factor']
+    cook_crew_factor = cost['Others']['cook_crew_factor']
+    mainte_amount = cost['Others']['mainte_amount']
+    accom_reduce_navi = cost['Others']['accom_reduce_navi']
+    accom_reduce_moni = cost['Others']['accom_reduce_moni']
+    TRLgap_semi = cost['Others']['TRLgap_semi']
     
     for i in range(len(ship_spec)):
         config[i] = 'Config'+str(i)
@@ -181,18 +161,19 @@ def calculate_cost(ship_spec, cost, year, tech):
     
     return spec
 
+# Need to rewrite ... 
 def trl_rate(trl):
     a = 1/4 if trl == 7 else 1/2 if trl == 8 else 1 if trl >= 9 else 0
     return a
 
 def get_tech_ini(tech_yml):
     tech_list = ['Berth', 'Navi', 'Moni'] # ideally from yml
-    column = ['tech_name', 'tech_cost', 'integ_factor', 'TRL', 'Rexp', 'Mexp', 'Oexp', 'tech_cost_min', 'accident_ratio', 'accident_ratio_base', 'accident_ratio_ini']
+    column = ['tech_name', 'tech_cost', 'integ_factor', 'integ_factor_ini', 'TRL', 'Rexp', 'Mexp', 'Oexp', 'tech_cost_min', 'accident_ratio', 'accident_ratio_base', 'accident_ratio_ini']
 
-    tech_name = [''] * len(tech_list)
     tech_cost = [0] * len(tech_list)
     tech_cost_min = [0] * len(tech_list)
     integ_factor = [0] * len(tech_list)
+    integ_factor_ini = [0] * len(tech_list)
     TRL = [0] * len(tech_list) #  May change to TECH
     Rexp = [0] * len(tech_list)
     Mexp = [0] * len(tech_list)
@@ -200,25 +181,40 @@ def get_tech_ini(tech_yml):
     accident_ratio_ini = [0] * len(tech_list)
     accident_ratio_base = [0] * len(tech_list)
     accident_ratio = [0] * len(tech_list)
+    
+    ope_max = tech_yml['Others']['ope_max']
+    manu_max = tech_yml['Others']['manu_max']
+    acc_reduction_full = tech_yml['Others']['acc_reduction_full']
+    ope_TRL_factor = tech_yml['Others']['ope_TRL_factor']
+    ope_safety_b = tech_yml['Others']['ope_safety_b']
+    randd_base = tech_yml['Others']['randd_base']
+    rd_TRL_factor = tech_yml['Others']['rd_TRL_factor']
+    rd_need_TRL = tech_yml['Others']['rd_need_TRL']
+    integ_b = tech_yml['Others']['integ_b']
+    # Rewrite afterwards... 
+    param = pd.Series({'ope_max': ope_max, 'manu_max': manu_max, 'acc_reduction_full': acc_reduction_full, 'ope_TRL_factor': ope_TRL_factor, 
+             'ope_safety_b': ope_safety_b, 'randd_base': randd_base, 'rd_TRL_factor': rd_TRL_factor, 'rd_need_TRL': rd_need_TRL, 
+             'integ_b': integ_b}, index = ['ope_max', 'manu_max', 'acc_reduction_full', 'ope_TRL_factor', 'ope_safety_b', 'randd_base', 'rd_TRL_factor', 'rd_need_TRL', 'integ_b'])
 
     for i in range(len(tech_list)):
         s = tech_list[i]
         tech_cost_min[i] = tech_yml[s]['min_cost']
-        integ_factor[i] = tech_integ_factor
+        integ_factor_ini[i] = tech_yml['Others']['tech_integ_factor']
+        integ_factor[i] = integ_factor_ini[i]
         TRL[i] = tech_yml[s]['TRL_ini']
         Rexp[i] = tech_yml[s]['R&D_exp']
         Mexp[i] = tech_yml[s]['Man_exp']
         Oexp[i] = tech_yml[s]['Ope_exp']
-        tech_cost[i] = tech_cost_min[i] * (10 - TRL[i])
+        tech_cost[i] = tech_cost_min[i] # * (10 - TRL[i])
         accident_ratio_ini[i] = tech_yml[s]['accident']
         accident_ratio_base[i] = accident_ratio_ini[i]
         accident_ratio[i] = accident_ratio_base[i]
     
-    tech_df = pd.DataFrame(zip(tech_list, tech_cost, integ_factor, TRL, Rexp, Mexp, Oexp, tech_cost_min, accident_ratio, accident_ratio_base, accident_ratio_ini), columns = column)
+    tech_df = pd.DataFrame(zip(tech_list, tech_cost, integ_factor, integ_factor_ini, TRL, Rexp, Mexp, Oexp, tech_cost_min, accident_ratio, accident_ratio_base, accident_ratio_ini), columns = column)
     
-    return tech_df
+    return tech_df, param
 
-def calculate_tech(tech, ship_fleet, ship_age):
+def calculate_tech(tech, param, ship_fleet, ship_age):
     ship_working = ship_fleet[-ship_age:]
     # print(ship_working)
     berth_list = ['config1', 'config5', 'config6', 'config7', 'config10', 'config11']
@@ -240,23 +236,24 @@ def calculate_tech(tech, ship_fleet, ship_age):
         tech.Mexp[2] += ship_working.iloc[-1][i]
         
     for i in range(len(tech.Oexp)):
-        tech.Oexp[i] = ope_max if tech.Oexp[i] > ope_max else tech.Oexp[i]
-        tech.Mexp[i] = manu_max if tech.Mexp[i] > manu_max else tech.Mexp[i]
+        tech.Oexp[i] = param.ope_max if tech.Oexp[i] > param.ope_max else tech.Oexp[i]
+        tech.Mexp[i] = param.manu_max if tech.Mexp[i] > param.manu_max else tech.Mexp[i]
     
     return tech
 
-def calculate_TRL_cost(tech):
+def calculate_TRL_cost(tech, param):
     TRL_need = [0] * 3
     for i in range(3):
-        TRL_need[i] = rd_need_TRL # * tech.TRL[i]
-        if (tech.Oexp[i] * ope_TRL_factor + tech.Rexp[i] * rd_TRL_factor) - TRL_need[i] > 0 and tech.TRL[i] < 9:
+        TRL_need[i] = param.rd_need_TRL # * tech.TRL[i]
+        if (tech.Oexp[i] * param.ope_TRL_factor + tech.Rexp[i] * param.rd_TRL_factor) - TRL_need[i] > 0 and tech.TRL[i] < 9:
             tech.TRL[i] += 1
-            tech.accident_ratio_base[i] -= acc_reduction_full * trl_rate(tech.TRL[i])
-            tech.Rexp[i] = tech.Rexp[i] - rd_need_TRL if tech.Rexp[i] - rd_need_TRL > 0 else 0
+            tech.accident_ratio_base[i] -= param.acc_reduction_full * trl_rate(tech.TRL[i])
+            tech.Rexp[i] = tech.Rexp[i] - param.rd_need_TRL if tech.Rexp[i] - param.rd_need_TRL > 0 else 0
 
-        tech.Rexp[i] += randd_base # Base investment (TBD)    
-        tech.tech_cost[i] = (10 - tech.TRL[i]) * tech.tech_cost_min[i]
-        tech.integ_factor[i] = 1+(tech_integ_factor-1)*(manu_max-tech.Mexp[i])/manu_max if manu_max > tech.Mexp[i] else 1
-        tech.accident_ratio[i] = tech.accident_ratio_base[i] * (tech.Oexp[i]+1) ** (-ope_safety_b)
+        tech.Rexp[i] += param.randd_base # Base investment (TBD)    
+        # tech.tech_cost[i] = (10 - tech.TRL[i]) * tech.tech_cost_min[i]
+        print(tech.Mexp[i], param.integ_b, tech.integ_factor_ini[i])
+        tech.integ_factor[i] = 1+(tech.integ_factor_ini[i]-1)*(tech.Mexp[i]+1)**(-param.integ_b) if param.manu_max > tech.Mexp[i] else 1
+        tech.accident_ratio[i] = tech.accident_ratio_base[i] * (tech.Oexp[i]+1) ** (-param.ope_safety_b)
 
     return tech

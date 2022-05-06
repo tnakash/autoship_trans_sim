@@ -1,6 +1,3 @@
-# Later goes to YML file ...
-subsidize_list = (9, 10, 11)
-
 class Investor():
     def __init__(self):
         self.invest_tech = 'None'
@@ -92,8 +89,8 @@ class PolicyMaker():
     def subsidize_investment(self, investor):
         investor.invest_amount += self.sub_RandD
         
-    def subsidize_Adoption(self, spec, num_newbuilding):
-        spec.loc[subsidize_list, 'subsidy'] = self.sub_Adoption / num_newbuilding
+    def subsidize_Adoption(self, spec, num_newbuilding, sub_list):
+        spec.loc[sub_list, 'subsidy'] = self.sub_Adoption / num_newbuilding
         return spec
         
     # def relax_regulation(self):

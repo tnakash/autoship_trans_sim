@@ -34,10 +34,9 @@ Others:
     num_crew_cook: 2
     num_crew_all: 20
     berth_pilot_save: 60000 # [USD]
-    integ_a: 725333 # [USD]
-    integ_b: 0.138
     ME_no_bridge_rate: 0.036
     AE_crew_rate: 0.4
+    TRLgap_semi: 3
 
 ManningCost:
   Captain: 162000
