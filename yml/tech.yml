@@ -13,7 +13,7 @@ Navi:
 Others:
   acc_reduction_full: 0.9
   integ_a: 725333
-  integ_b: 0.3
+  integ_b: 0.1
   manu_max: 150
   ope_TRL_factor: 0.4
   ope_max: 10000

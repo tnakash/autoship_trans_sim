@@ -190,8 +190,8 @@ def main():
         # Visualization                    
         TRL = pd.DataFrame({"Berth": Berth.TRL, "Navi": Navi.TRL, "Moni": Moni.TRL})
         st.line_chart(TRL)
-        Tech_cost = pd.DataFrame({"Berth_ModuleCost": Berth.tech_cost, "Navi_ModuleCost": Navi.tech_cost, "Moni_ModuleCost": Moni.tech_cost})
-        st.line_chart(Tech_cost)
+        Integ_cost = pd.DataFrame({"Berth_Integration_Cost": Berth.integ_factor, "Navi_Integration_Cost": Navi.integ_factor, "Moni_Integration_Cost": Moni.integ_factor})
+        st.line_chart(Integ_cost)
         Rexp = pd.DataFrame({"Berth_Rexp": Berth.Rexp, "Navi_Rexp": Navi.Rexp, "Moni_Rexp": Moni.Rexp})
         st.line_chart(Rexp)
         Mexp = pd.DataFrame({"Berth_Mexp": Berth.Mexp, "Navi_Mexp": Navi.Mexp, "Moni_Mexp": Moni.Mexp})
