@@ -38,7 +38,7 @@ def main():
     economy = st.sidebar.slider('Profitability weight[-]',0.0,1.0,1.0)
     safety = st.sidebar.slider('Safety weight[-]',0.0,1.0,0.5) 
     estimated_loss = st.sidebar.slider('Estimated average accident loss[USD]',0,50000000,10000000)
-
+    
     # Selecting params for Investors        
     st.sidebar.markdown('### 2.2 Manufacturer (R&D Investor))')
     st.sidebar.write("Technology type and Amount of investment")    
@@ -96,6 +96,12 @@ def main():
     ship_spec_yml = get_yml('ship_spec')
     tech, param = get_tech_ini(tech_yml)
     
+    # Write settings
+    other_params = pd.DataFrame({'economy': economy, 'safety': safety, 'estimated loss': estimated_loss, 'subsidy R&D': subsidy_RandD, 
+            'subsidy adoption': subsidy_Adoption, 'TRL regulation': TRLreg, 'Manu Loop': Mexp_to_production_loop, 
+            'Ope Loop (TRL)': Oexp_to_TRL_loop, 'Ope Loop (Safety)': Oexp_to_safety_loop},index=['value']).T
+    other_params.to_csv('csv/setting'+casename+'.csv')
+    
     if 'Year' not in st.session_state:
         st.session_state['Year'] = start_year
     
@@ -151,7 +157,7 @@ def main():
         # proceed year
         st.session_state.Year += dt_year
    
-        # Save Tentative File for iterative simulation
+        # Save Tentative File for iterative simulation (and final results)
         spec.to_csv('csv/spec'+casename+'.csv')
         tech_accum.to_csv('csv/tech'+casename+'.csv')
         Owner.fleet.to_csv('csv/fleet'+casename+'.csv')
@@ -209,17 +215,27 @@ def main():
         Cost of each type of autonomous ship
         """
         st.write('under construction ...')
-    
+        
+        '''
+        #### Finished
+        '''    
         with zipfile.ZipFile('csv/'+casename+'.zip', 'w', compression=zipfile.ZIP_DEFLATED) as z:
             z.write('csv/spec'+casename+'.csv')
             z.write('csv/tech'+casename+'.csv')
             z.write('csv/fleet'+casename+'.csv')
-
-        st.markdown('#### Download Results')
-        st.download_button('Download result files (compressed)',open('csv/'+casename+'.zip', 'br'), casename+'.zip')
+            z.write('csv/setting'+casename+'.csv')
+            z.write('yml/tech.yml')
+            z.write('yml/scenario.yml')
+            z.write('yml/cost.yml')
+            z.write('yml/ship_spec.yml')
 
         if st.session_state.Year >= end_year:
-            st.write('Simulation Done!!!!!')
+            st.write('Simulation Done!! (Please push "Rerun" from the Top-Right Hamburger Menu)')
+
+        '''
+        ### Download Results
+        '''    
+        st.download_button('Download result files (compressed)',open('csv/'+casename+'.zip', 'br'), casename+'.zip')
 
 if __name__ =='__main__':
     '''
