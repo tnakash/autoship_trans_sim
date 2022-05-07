@@ -210,9 +210,9 @@ def get_tech_ini(tech_yml):
         integ_factor_ini[i] = tech_yml['Others']['tech_integ_factor']
         integ_factor[i] = integ_factor_ini[i]
         TRL[i] = tech_yml[s]['TRL_ini']
-        Rexp[i] = tech_yml[s]['R&D_exp']
-        Mexp[i] = tech_yml[s]['Man_exp']
-        Oexp[i] = tech_yml[s]['Ope_exp']
+        # Rexp[i] = tech_yml[s]['R&D_exp']
+        # Mexp[i] = tech_yml[s]['Man_exp']
+        # Oexp[i] = tech_yml[s]['Ope_exp']
         tech_cost[i] = tech_cost_min[i] # * (10 - TRL[i])
         accident_ratio_ini[i] = tech_yml[s]['accident']
         accident_ratio_base[i] = accident_ratio_ini[i]

@@ -1,6 +1,6 @@
 from Agent import ShipOwner, Investor, PolicyMaker
 from output import show_tradespace_general
-from input import get_yml, get_scenario, set_scenario
+from input import get_yml, get_scenario, set_scenario, set_tech
 from calculate import calculate_cost, calculate_tech, get_tech_ini, calculate_TRL_cost
 
 import streamlit as st
@@ -18,7 +18,7 @@ def main():
     st.markdown('#### 1. Scenario Setting')
 
     # Selecting params for simulation scenario
-    st.write('#### 1.1 Basic Setting')
+    st.write('1.1 Basic Setting')
     casename = st.text_input("Casename", value="test_0503")
     start_year, end_year = st.slider('Simulation Year',2020,2070,(2022,2050))
     numship_init = st.slider('Initial Number of ships[ship]',1,10000,1000)
@@ -72,29 +72,29 @@ def main():
     # Regulator (Subsidy for Manufacturer) (Increase the investment amount)
     Regulator.subsidize_investment(Manufacturer)
 
-    # Input from YML file
-    cost_yml = get_yml('cost')
-    tech_yml = get_yml('tech')
-    ship_spec_yml = get_yml('ship_spec')
-    tech, param = get_tech_ini(tech_yml)
-
-    st.write('#### 1.2 Additional Setting')    
+    st.write('1.2 Additional Setting (You can skip!)')    
     Mexp_to_production_loop = st.checkbox('Include effect of Manufacturing experience to Production cost',value=True)
     Oexp_to_TRL_loop = st.checkbox('Include effect of Operational experience to TRL',value=True)
     Oexp_to_safety_loop = st.checkbox('Include effect of Operational experience to Safety',value=True)
     
     # Additional Parameter Setting
-    set_add = st.button('Want to set additional parameters?')
-    if set_add:
-        tech_integ_factor = st.slider('Initial integration cost ratio for each tech',1.0,2.0,1.2)
-        integ_b = st.slider('Integration cost reduction ratio b (y = ax**(-b))',0.000,1.000, 0.138)
-        ope_safety_b = st.slider('Accident reduction ratio b (y = ax**(-b))', 0.000,1.000,0.075)
-        acc_reduction_full = st.slider('Human Erron Rate [-]', 0.0, 1.0, 0.9)
-        ope_TRL_factor = st.slider('Operational experience R&D value (USD/times)',0.0,10.0,0.4)
-        rd_need_TRL = st.slider('Necessary R&D Amount for 1TRL-up (MUSD(*year)/TRL)',1,30,20) * 1000000
-        randd_base = st.slider('Base R&D Amount (without Investment) (MUSD/year)',0,30,1) * 1000000
-        # manu_max = st.slider('Max Manufacturing times (ship)',1,1000,100)
-        # ope_max = st.slider('Max Operation times (year*ship)',1,10000,10000)
+    # set_add = st.button('Want to set additional parameters?')
+    tech_integ_factor = st.slider('Initial integration cost ratio for each tech',1.0,2.0,1.2)
+    integ_b = st.slider('Integration cost reduction ratio b (y = ax**(-b))',0.0,1.0,0.3)
+    ope_safety_b = st.slider('Accident reduction ratio b (y = ax**(-b))', 0.0,1.0,0.2)
+    acc_reduction_full = st.slider('Human Erron Rate [-]', 0.0, 1.0, 0.9)
+    ope_TRL_factor = st.slider('Operational experience R&D value (USD/times)',0.0,10.0,0.4)
+    rd_need_TRL = st.slider('Necessary R&D Amount for 1TRL-up (MUSD(*year)/TRL)',1,30,20) * 1000000
+    randd_base = st.slider('Base R&D Amount (without Investment) (MUSD/year)',0,30,1) * 1000000
+    # manu_max = st.slider('Max Manufacturing times (ship)',1,1000,100)
+    # ope_max = st.slider('Max Operation times (year*ship)',1,10000,10000)    
+    set_tech(tech_integ_factor, integ_b, ope_safety_b, ope_TRL_factor, rd_need_TRL, randd_base, acc_reduction_full)
+    
+    # Input from YML file
+    cost_yml = get_yml('cost')
+    tech_yml = get_yml('tech')
+    ship_spec_yml = get_yml('ship_spec')
+    tech, param = get_tech_ini(tech_yml)
     
     if 'Year' not in st.session_state:
         st.session_state['Year'] = start_year
