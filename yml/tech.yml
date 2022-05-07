@@ -26,15 +26,15 @@ Others:
   tech_integ_factor: 1.2
   integ_a: 725333 # [USD] not in use
   integ_b: 0.138
-  ope_max: 10000 # [times (year*ship)]
-  manu_max: 150 # [times (ship)]
+  ope_max: 10000 # [times (year*ship)] not in use
+  manu_max: 150 # [times (ship)] not in use
   ope_safety_b: 0.075 # ope_max -> 1/2
   ope_TRL_factor: 0.4 # [USD/times]
   rd_TRL_factor: 1 # [USD/y]
   rd_need_TRL: 20000000 # [USD/TRL]
   randd_base: 1000000 # [USD/y]
   acc_reduction_full: 0.9 # Human Erron Rate [-]
-  trl_reduction:
+  trl_reduction: # just write on the current page
     TRL9: 1
     TRL8: 0.5
     TRL7: 0.25

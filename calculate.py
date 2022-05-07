@@ -78,6 +78,7 @@ def calculate_cost(ship_spec, cost, year, tech):
         Navi[i] = ship_spec[config[i]]['Navi']
         Moni[i] = ship_spec[config[i]]['Moni']
         
+        # 本来は実際の人数を考慮し，結びつける必要がある
         num_navi[i] = 0 if Navi == 2 else num_crew_navi/2 if Navi == 1 else num_crew_navi
         num_engi[i] = 0 if Moni == 1 else num_crew_moni
         num_cook[i] = 0 if Navi == 2 and Moni == 1 else num_crew_cook
@@ -242,9 +243,9 @@ def calculate_tech(tech, param, ship_fleet, ship_age):
         tech.Oexp[2] += ship_working[i].sum() 
         tech.Mexp[2] += ship_working.iloc[-1][i]
         
-    for i in range(len(tech.Oexp)):
-        tech.Oexp[i] = param.ope_max if tech.Oexp[i] > param.ope_max else tech.Oexp[i]
-        tech.Mexp[i] = param.manu_max if tech.Mexp[i] > param.manu_max else tech.Mexp[i]
+    # for i in range(len(tech.Oexp)):
+    #     tech.Oexp[i] = param.ope_max if tech.Oexp[i] > param.ope_max else tech.Oexp[i]
+    #     tech.Mexp[i] = param.manu_max if tech.Mexp[i] > param.manu_max else tech.Mexp[i]
     
     return tech
 
@@ -266,7 +267,7 @@ def calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, O
         tech.Rexp[i] += param.randd_base # Base investment (TBD)    
         # tech.tech_cost[i] = (10 - tech.TRL[i]) * tech.tech_cost_min[i]
         if Mexp_to_production_loop:
-            tech.integ_factor[i] = 1+(tech.integ_factor_ini[i]-1)*(tech.Mexp[i]+1)**(-param.integ_b) if param.manu_max > tech.Mexp[i] else 1
+            tech.integ_factor[i] = 1+(tech.integ_factor_ini[i]-1)*(tech.Mexp[i]+1)**(-param.integ_b) # if param.manu_max > tech.Mexp[i] else 1
         
         if Oexp_to_safety_loop:
             tech.accident_ratio[i] = tech.accident_ratio_base[i] * (tech.Oexp[i]+1) ** (-param.ope_safety_b)

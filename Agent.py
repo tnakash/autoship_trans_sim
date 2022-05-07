@@ -45,14 +45,29 @@ class ShipOwner:
         # self.labour = labour
         self.fleet = current_fleet
 
-    def select_ship(self, spec):
-        # 同じことをやっている気もするが，ここはあえて色々な選考パターンを作る目的で．
+    def select_ship(self, spec, tech, TRLreg):
+        # Rewrite afterwards ... 
+        berth_list = [1,5,6,7,10,11]
+        navi1_list = [2,5,8,10]
+        navi2_list = [3,6,9,11]
+        moni_list = [4,7,8,9,10,11]
+        
+        # 同じ計算をあちこちでやっているが，ここはあえて色々な選考パターンを作る目的で．
         labour_cost, fuel_cost, capex_sum, opex_sum, voyex_sum, addcost_sum, accident_sum = self.calculate_assumption(spec)
-        annual_cost = opex_sum + capex_sum + voyex_sum + addcost_sum
-
+        annual_cost = opex_sum + capex_sum + voyex_sum + addcost_sum                
         select_parameter = annual_cost * self.economy + accident_sum * self.safety * self.accident_loss - spec['subsidy']
-        select = select_parameter.idxmin()
+        
+        # Consider TRL regulation
+        for i in berth_list:
+            select_parameter[i] += 99999999 if tech.TRL[0] < TRLreg else 0
+        for i in navi1_list:
+            select_parameter[i] += 99999999 if tech.TRL[1]+3 < TRLreg else 0
+        for i in navi2_list:
+            select_parameter[i] += 99999999 if tech.TRL[1] < TRLreg else 0
+        for i in moni_list:
+            select_parameter[i] += 99999999 if tech.TRL[2] < TRLreg else 0
 
+        select = select_parameter.idxmin()
         return select
 
     def purchase_ship(self, select, year):

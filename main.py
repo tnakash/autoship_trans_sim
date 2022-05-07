@@ -1,29 +1,29 @@
 from Agent import ShipOwner, Investor, PolicyMaker
-
 from output import show_tradespace_general
 from input import get_yml, get_scenario, set_scenario
 from calculate import calculate_cost, calculate_tech, get_tech_ini, calculate_TRL_cost
 
 import streamlit as st
 import pandas as pd
-from PIL import Image
-
 import altair as alt
+
+from PIL import Image
+import zipfile
 import matplotlib.pyplot as plt
-import pandas as pd
+
 
 def main():    
     img = Image.open('fig/logo.png')
     st.image(img, width = 300)
-    st.markdown('#### Scenario Setting')
+    st.markdown('#### 1. Scenario Setting')
 
+    # Selecting params for simulation scenario
+    st.write('#### 1.1 Basic Setting')
     casename = st.text_input("Casename", value="test_0503")
-
-    # Selecting params for simulation scenario    
     start_year, end_year = st.slider('Simulation Year',2020,2070,(2022,2050))
     numship_init = st.slider('Initial Number of ships[ship]',1,10000,1000)
     numship_growth = st.slider('Annual growth rate of ship demand[-]',0.90,1.10,1.01)
-    ship_age = st.slider('Average Ship Lifeyear',20,30,25)
+    ship_age = 25 # st.slider('Average Ship Lifeyear',20,30,25)
     dt_year = st.slider('Interval for Reset parameters[year]',1,50,50)
     set_scenario(casename, start_year, end_year, numship_init, numship_growth, ship_age)
     # Get scenario from yml file (just made)    
@@ -31,26 +31,16 @@ def main():
     current_fleet, num_newbuilding = get_scenario(scenario_yml)
     
     # Agent Parameter Setting
-    st.sidebar.markdown('## Agent Parameter Setting')
+    st.sidebar.markdown('## 2. Agent Parameter Setting')
     # Selecting params for Shipowners
-    st.sidebar.markdown('### Ship Owner')
+    st.sidebar.markdown('### 2.1 Ship Owner')
     st.sidebar.write("Parameters for ship adoption")
     economy = st.sidebar.slider('Profitability weight[-]',0.0,1.0,1.0)
     safety = st.sidebar.slider('Safety weight[-]',0.0,1.0,0.5) 
     estimated_loss = st.sidebar.slider('Estimated average accident loss[USD]',0,50000000,10000000)
 
-    # Selecting params for Policy Makerss        
-    st.sidebar.markdown('### Policy Maker')
-    st.sidebar.write("Type and amount of subsidy")    
-    # subsidy_type = st.sidebar.selectbox("Subsidy for",["R&D","Adoption"])
-    # subsidy_amount = st.sidebar.slider('Subsidy Amount',0,200000,100000)
-    subsidy_RandD = st.sidebar.slider('Subsidy Amount (R&D)[USD/year]',0,20000000,10000000)
-    subsidy_Adoption =  st.sidebar.slider('Subsidy Amount (Adoption)[USD/year]',0,20000000,0)
-    if subsidy_Adoption > 0:
-        sub_list = st.sidebar.slider('Give subsidy from Config. ',1,11,(9,11))
-    
     # Selecting params for Investors        
-    st.sidebar.markdown('### Manufacturer (R&D Investor))')
+    st.sidebar.markdown('### 2.2 Manufacturer (R&D Investor))')
     st.sidebar.write("Technology type and Amount of investment")    
     invest_tech = st.sidebar.selectbox("Investment Strategy",["All","Berth","Navi","Moni"])
     invest_amount = st.sidebar.slider('Investment Amount [USD/year]',0,1000000,500000)
@@ -58,6 +48,18 @@ def main():
     # invest_navi = st.sidebar.slider('Investment Amount (Navi)',0,2000000,2000000)
     # invest_moni = st.sidebar.slider('Investment Amount (Moni)',0,2000000,2000000)
 
+    # Selecting params for Policy Makerss        
+    st.sidebar.markdown('### 2.3 Policy Maker')
+    st.sidebar.write("Type and amount of subsidy")    
+    # subsidy_type = st.sidebar.selectbox("Subsidy for",["R&D","Adoption"])
+    # subsidy_amount = st.sidebar.slider('Subsidy Amount',0,200000,100000)
+    subsidy_RandD = st.sidebar.slider('Subsidy Amount (R&D)[USD/year]',0,20000000,10000000)
+    subsidy_Adoption =  st.sidebar.slider('Subsidy Amount (Adoption)[USD/year]',0,20000000,0)
+    if subsidy_Adoption > 0:
+        sub_list_min, sub_list_max = st.sidebar.slider('Give subsidy from Config. ',1,11,(9,11))
+        sub_list = range(sub_list_min, sub_list_max)
+    TRLreg = st.sidebar.selectbox('TRL regulation (minimum TRL for deployment)', (7, 8))
+    
     # Set agents
     Owner = ShipOwner(economy, safety, current_fleet, num_newbuilding, estimated_loss)
     Manufacturer = Investor()
@@ -75,14 +77,29 @@ def main():
     tech_yml = get_yml('tech')
     ship_spec_yml = get_yml('ship_spec')
     tech, param = get_tech_ini(tech_yml)
+
+    st.write('#### 1.2 Additional Setting')    
+    Mexp_to_production_loop = st.checkbox('Include effect of Manufacturing experience to Production cost',value=True)
+    Oexp_to_TRL_loop = st.checkbox('Include effect of Operational experience to TRL',value=True)
+    Oexp_to_safety_loop = st.checkbox('Include effect of Operational experience to Safety',value=True)
     
-    Mexp_to_production_loop = st.checkbox('Include effect of Manufacturing experience to Production cost')
-    Oexp_to_TRL_loop = st.checkbox('Include effect of Operational experience to TRL')
-    Oexp_to_safety_loop = st.checkbox('Include effect of Operational experience to Safety')
+    # Additional Parameter Setting
+    set_add = st.button('Want to set additional parameters?')
+    if set_add:
+        tech_integ_factor = st.slider('Initial integration cost ratio for each tech',1.0,2.0,1.2)
+        integ_b = st.slider('Integration cost reduction ratio b (y = ax**(-b))',0.000,1.000, 0.138)
+        ope_safety_b = st.slider('Accident reduction ratio b (y = ax**(-b))', 0.000,1.000,0.075)
+        acc_reduction_full = st.slider('Human Erron Rate [-]', 0.0, 1.0, 0.9)
+        ope_TRL_factor = st.slider('Operational experience R&D value (USD/times)',0.0,10.0,0.4)
+        rd_need_TRL = st.slider('Necessary R&D Amount for 1TRL-up (MUSD(*year)/TRL)',1,30,20) * 1000000
+        randd_base = st.slider('Base R&D Amount (without Investment) (MUSD/year)',0,30,1) * 1000000
+        # manu_max = st.slider('Max Manufacturing times (ship)',1,1000,100)
+        # ope_max = st.slider('Max Operation times (year*ship)',1,10000,10000)
     
     if 'Year' not in st.session_state:
         st.session_state['Year'] = start_year
     
+    st.sidebar.write("## 3. Run Simulation")
     next_step = st.sidebar.button('Start/Restart')
     if next_step:
         if st.session_state['Year'] == start_year:
@@ -113,10 +130,11 @@ def main():
             spec_current = calculate_cost(ship_spec_yml, cost_yml, start_year+i, tech)
             
             # Regulator (Subsidy for Adoption)
-            spec_current = Regulator.subsidize_Adoption(spec_current,num_newbuilding.ship[i],sub_list)
+            if subsidy_Adoption > 0:
+                spec_current = Regulator.subsidize_Adoption(spec_current,num_newbuilding.ship[i],sub_list)
             
             # Ship Owner (Adoption and Purchase)
-            select = Owner.select_ship(spec_current)
+            select = Owner.select_ship(spec_current, tech, TRLreg)
             Owner.purchase_ship(select, i)
 
             # Show Tradespace
@@ -144,6 +162,19 @@ def main():
         """
         Owner.fleet.set_index("year", inplace=True)
         st.area_chart(Owner.fleet)
+        ## 【参考】Altairでの可視化
+        # data = pd.melt(Owner.fleet, id_vars=['year']).rename(columns={'value': 'Num of newbuilding (ship)'})
+        # st.write(data)
+        # chart = (
+        #     alt.Chart(data)
+        #     .mark_line(opacity = 0.8, clip = True)
+        #     .encode(
+        #         x="year",
+        #         y=alt.Y('Num of newbuilding (ship)', stack=None),
+        #         color='variable:N'
+        #     )
+        # )
+        # st.altair_chart(chart, use_container_width=True)
 
         """
         Technology Development
@@ -177,7 +208,15 @@ def main():
         """
         Cost of each type of autonomous ship
         """
-        st.write('under construction ...')                   
+        st.write('under construction ...')
+    
+        with zipfile.ZipFile('csv/'+casename+'.zip', 'w', compression=zipfile.ZIP_DEFLATED) as z:
+            z.write('csv/spec'+casename+'.csv')
+            z.write('csv/tech'+casename+'.csv')
+            z.write('csv/fleet'+casename+'.csv')
+
+        st.markdown('#### Download Results')
+        st.download_button('Download result files (compressed)',open('csv/'+casename+'.zip', 'br'), casename+'.zip')
 
         if st.session_state.Year >= end_year:
             st.write('Simulation Done!!!!!')
