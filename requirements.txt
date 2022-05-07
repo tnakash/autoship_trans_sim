@@ -1,5 +1,5 @@
 streamlit==1.9.0
-pandas==1.4.1
+pandas
 altair==4.2.0
 PyYAML==6.0
 Pillow==9.0.1
