@@ -1,5 +1,5 @@
 from Agent import ShipOwner, Investor, PolicyMaker
-from output import show_tradespace_general
+from output import show_tradespace_general, get_resultsareachart
 from input import get_yml, get_scenario, set_scenario, set_tech
 from calculate import calculate_cost, calculate_tech, get_tech_ini, calculate_TRL_cost
 
@@ -210,6 +210,8 @@ def main():
         """
         Tech_accident = pd.DataFrame({"Berth_accident": Berth.accident_ratio, "Navi_accident": Navi.accident_ratio, "Moni_accident": Moni.accident_ratio})
         st.line_chart(Tech_accident)
+        # results_accident =get_resultsareachart(Tech_accident)
+        # st.altair_chart(results_accident, use_container_width=True)
         
         """
         Cost of each type of autonomous ship

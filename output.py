@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import streamlit as st
+import altair as alt 
 
 def show_tradespace_general(a, b, alabel, blabel, title, list, selected_index):
     fig = plt.figure(figsize=(10,10))
@@ -91,3 +92,44 @@ def show_output(result, labels1, spec):
     for s in labels1:
         i = spec.index[spec.ship_type == s].tolist()[0]
         st.write(s, '| SituationAwareness:', spec.SituationAwareness[i], '| Planning:', spec.Planning[i], '| Control:', spec.Control[i], '| Remote:', spec.Remote[i])
+        
+def get_resultsareachart(result_data):
+
+    result_data = result_data.reset_index().melt('year', var_name='type', value_name='y')
+
+    hover = alt.selection_single(
+        fields=["year"],
+        nearest=True,
+        on="mouseover",
+        empty="none",
+    )
+
+    graphbase = (
+        alt.Chart(result_data)
+        .mark_area()
+        .encode(
+            alt.X("year", title=''),
+            alt.Y("y", title=''),
+            color="type",
+        )
+    )
+
+    # Draw points on the line, and highlight based on selection
+    graphpoints = graphbase.transform_filter(hover).mark_circle(size=65)
+
+    # Draw a rule at the location of the selection
+    graphtooltips = (
+        alt.Chart(result_data)
+        .mark_rule()
+        .encode(
+            alt.X("year"),
+            alt.Y("y"),
+            opacity=alt.condition(hover, alt.value(0.3), alt.value(0)),
+            tooltip=[
+                alt.Tooltip("year", title="year"),
+                alt.Tooltip("y", title="value"),
+            ],
+        )
+        .add_selection(hover)
+    )
+    return (graphbase+ graphpoints+ graphtooltips).interactive()
