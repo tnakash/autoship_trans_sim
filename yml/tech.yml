@@ -17,7 +17,7 @@ Others:
   manu_max: 150
   ope_TRL_factor: 0.4
   ope_max: 10000
-  ope_safety_b: 0.25
+  ope_safety_b: 0.2
   randd_base: 1000000
   rd_TRL_factor: 1
   rd_need_TRL: 20000000
