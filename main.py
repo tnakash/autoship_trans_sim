@@ -218,9 +218,6 @@ def main():
         """
         st.write('under construction ...')
         
-        '''
-        #### Finished
-        '''    
         with zipfile.ZipFile('csv/'+casename+'.zip', 'w', compression=zipfile.ZIP_DEFLATED) as z:
             z.write('csv/spec'+casename+'.csv')
             z.write('csv/tech'+casename+'.csv')
@@ -232,7 +229,7 @@ def main():
             z.write('yml/ship_spec.yml')
 
         if st.session_state.Year >= end_year:
-            st.write('Simulation Done!! (Please push "Rerun" from the Top-Right Hamburger Menu)')
+            st.write('Simulation Done!! (Please push "Clear Cache (Ctrl+C)" and "Rerun (Ctrl+R)" from the Top-Right Hamburger Menu)')
 
         '''
         ### Download Results
