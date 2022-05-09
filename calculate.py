@@ -267,7 +267,7 @@ def calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, O
         tech.Rexp[i] += param.randd_base # Base investment (TBD)    
         # tech.tech_cost[i] = (10 - tech.TRL[i]) * tech.tech_cost_min[i]
         if Mexp_to_production_loop:
-            tech.integ_factor[i] = tech.integ_factor_ini[i]*(tech.Mexp[i]+1)**(-param.integ_b)) # if param.manu_max > tech.Mexp[i] else 1
+            tech.integ_factor[i] = tech.integ_factor_ini[i]*(tech.Mexp[i]+1)**(-param.integ_b) # if param.manu_max > tech.Mexp[i] else 1
             tech.integ_factor[i] = 1 if tech.integ_factor[i] < 1 else tech.integ_factor[i]
         
         if Oexp_to_safety_loop:
