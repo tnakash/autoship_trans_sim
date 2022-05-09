@@ -96,7 +96,7 @@ def calculate_cost(ship_spec, cost, year, tech):
         integrate_cost[i] = cost['CAPEX']['integrate_cost'] * (1
                           + Berth[i] * (tech.integ_factor[0]-1)
                           + Navi[i] * (tech.integ_factor[1]-1)
-                          + Moni[i] * (tech.integ_factor[2]-1))
+                          + Moni[i] * (tech.integ_factor[2]-1)) # 220509 Need to reconsider
         add_eq_cost[i] = tech.tech_cost[0] * Berth[i] + tech.tech_cost[1] * Navi[i] + tech.tech_cost[2] * Moni[i]
         
         port_call[i] = cost['VOYEX']['port_call']
@@ -125,7 +125,7 @@ def calculate_cost(ship_spec, cost, year, tech):
             SCC_Capex[i] += cost['AddCost']['SCC_Capex']*0.5
             SCC_Opex[i] += cost['AddCost']['SCC_Opex']*0.5
             SCC_Personal[i] += cost['AddCost']['SCC_Personal']*0.5
-            acc_ratio_navi[i] = (tech.accident_ratio_base[1]+tech.accident_ratio[1]) * 0.5  # Need to Change
+            acc_ratio_navi[i] = (tech.accident_ratio_base[1]+tech.accident_ratio[1]) * 0.5
             fuel_cost_AE[i] -= cost['VOYEX']['fuel_cost_AE'] * AE_crew_rate * num_crew_navi/num_crew_all * 0.5 * trl_rate(tech.TRL[1]+TRLgap_semi)
         elif Navi[i] == 2:
             crew_cost[i] -= cost['OPEX']['crew_cost'] * navi_crew_factor * trl_rate(tech.TRL[1])
@@ -267,7 +267,8 @@ def calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, O
         tech.Rexp[i] += param.randd_base # Base investment (TBD)    
         # tech.tech_cost[i] = (10 - tech.TRL[i]) * tech.tech_cost_min[i]
         if Mexp_to_production_loop:
-            tech.integ_factor[i] = 1+(tech.integ_factor_ini[i]-1)*(tech.Mexp[i]+1)**(-param.integ_b) # if param.manu_max > tech.Mexp[i] else 1
+            tech.integ_factor[i] = tech.integ_factor_ini[i]*(tech.Mexp[i]+1**(-param.integ_b)) # if param.manu_max > tech.Mexp[i] else 1
+            tech.integ_factor[i] = 1 if tech.integ_factor[i] < 1 else tech.integ_factor[i]
         
         if Oexp_to_safety_loop:
             tech.accident_ratio[i] = tech.accident_ratio_base[i] * (tech.Oexp[i]+1) ** (-param.ope_safety_b)

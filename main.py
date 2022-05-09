@@ -80,9 +80,9 @@ def main():
     # Additional Parameter Setting
     # set_add = st.button('Want to set additional parameters?')
     tech_integ_factor = st.slider('Initial integration cost ratio for each tech',1.0,2.0,1.2)
-    integ_b = st.slider('Integration cost reduction ratio b (y = ax**(-b))',0.0,1.0,0.3)
+    integ_b = st.slider('Integration cost reduction ratio b (y = ax**(-b))',0.00,0.1,0.04)
     ope_safety_b = st.slider('Accident reduction ratio b (y = ax**(-b))', 0.0,1.0,0.2)
-    acc_reduction_full = st.slider('Human Erron Rate [-]', 0.0, 1.0, 0.9)
+    acc_reduction_full = st.slider('Human Erron Rate [-]', 0.0, 1.0, 0.7)
     ope_TRL_factor = st.slider('Operational experience R&D value (USD/times)',0.0,10.0,0.4)
     rd_need_TRL = st.slider('Necessary R&D Amount for 1TRL-up (MUSD(*year)/TRL)',1,30,20) * 1000000
     randd_base = st.slider('Base R&D Amount (without Investment) (MUSD/year)',0,30,1) * 1000000

@@ -22,7 +22,7 @@ AddCost: # should estimate from the basic?
     Mnt_in_port: 155250
 
 Others:
-    navi_crew_factor: 0.39 # Just to confirm
+    navi_crew_factor: 0.39
     moni_crew_factor: 0.56
     cook_crew_factor: 0.05
     mainte_amount: 67000
