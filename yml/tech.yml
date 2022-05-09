@@ -11,9 +11,9 @@ Navi:
   accident: 78
   min_cost: 34000
 Others:
-  acc_reduction_full: 0.9
+  acc_reduction_full: 0.7
   integ_a: 725333
-  integ_b: 0.3
+  integ_b: 0.04
   manu_max: 150
   ope_TRL_factor: 0.4
   ope_max: 10000
