@@ -171,6 +171,11 @@ def main():
         
         crew_list = ['NaviCrew', 'EngiCrew', 'Cook']
         cost_list = ['OPEX', 'CAPEX', 'VOYEX', 'AddCost']
+        opex_list = ['crew_cost', 'store_cost', 'maintenance_cost', 'insurance_cost', 'general_cost', 'dock_cost']
+        capex_list = ['material_cost', 'integrate_cost', 'add_eq_cost']
+        voyex_list = ['port_call', 'fuel_cost_ME', 'fuel_cost_AE']
+        addcost_list = ['SCC_Capex', 'SCC_Opex', 'SCC_Personal', 'Mnt_in_port']
+        cost_detail_list = opex_list + capex_list + voyex_list + addcost_list 
         accident_list = ['accident_berth', 'accident_navi', 'accident_moni']
         config_list = ['config0', 'config1', 'config2', 'config3', 'config4', 'config5', 'config6', 'config7', 'config8', 'config9', 'config10', 'config11']
 
@@ -179,7 +184,7 @@ def main():
         """
         show_stackplot(fleet, config_list, "Number of ships for each autonomous level")
         
-        for c in cost_list+accident_list+crew_list+['Profit']:
+        for c in cost_list+accident_list+crew_list+['Profit'] + cost_detail_list:
             fleet[c] = 0
         
         for i in range(start_year, end_year+1):
@@ -195,10 +200,28 @@ def main():
             for c in crew_list:
                 for s in config_list:
                     fleet[c][i] += fleet[s][i] * spec[(spec['year'] == i) & (spec['config'] == s)][c].mean()
+        
+            for c in cost_detail_list:
+                for s in config_list:
+                    fleet[c][i] += fleet[s][i] * spec[(spec['year'] == i) & (spec['config'] == s)][c].mean()
 
-        show_stackplot(fleet, fleet[cost_list], "Cost for Each Vessel")
-        show_stackplot(fleet, fleet[accident_list], "Number of Expected Accidents (num of accidents)")
-        show_stackplot(fleet, fleet[crew_list], "Number of Seafarers")        
+
+        """
+        Cost of Each Vessel [USD]
+        """
+        show_stackplot(fleet, fleet[cost_list], "Cost of Each Vessel [USD]")
+        """
+        Cost of Each Vessel (detailed) [USD]
+        """
+        show_stackplot(fleet, fleet[cost_detail_list], "Cost of Each Vessel (detailed) [USD]")
+        """
+        Number of Expected Accidents [num of accidents]
+        """
+        show_stackplot(fleet, fleet[accident_list], "Number of Expected Accidents [num of accidents]")
+        """
+        Number of Seafarers [people]
+        """
+        show_stackplot(fleet, fleet[crew_list], "Number of Seafarers [people]")        
         """
         Profit of the Industry (Difference from 'existing vessel' fleet) [USD]
         """ 
