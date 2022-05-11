@@ -54,6 +54,14 @@ def show_tradespace(i, annual_cost, ac_loss, sf_sum, fuel_cost, selected_index):
         #     ax3.text(annual_cost[j], fuel_cost[j], label)
         plt.show()
         st.pyplot(fig)
+        
+def show_stackplot(result, label, title):
+    fig = plt.figure(figsize=(20,10))
+    ax1 = fig.add_subplot(1, 1, 1)
+    ax1.stackplot(result.index, [result[s] for s in label], labels=label)
+    ax1.set_title(title)
+    ax1.legend(loc="upper left")
+    st.pyplot(fig)
 
 # Show Outputs
 def show_output(result, labels1, spec):

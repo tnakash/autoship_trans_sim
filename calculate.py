@@ -1,6 +1,6 @@
 import pandas as pd
 
-def calculate_cost(ship_spec, cost, year, tech):
+def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi):
 
     tech_list = ['Berth', 'Navi', 'Moni']
     crew_list = ['NaviCrew', 'EngiCrew', 'Cook']
@@ -73,29 +73,29 @@ def calculate_cost(ship_spec, cost, year, tech):
     AE_crew_rate = cost['Others']['AE_crew_rate']
     
     for i in range(len(ship_spec)):
-        config[i] = 'Config'+str(i)
+        config[i] = 'config'+str(i)
         Berth[i] = ship_spec[config[i]]['Berth'] #  May change to TECH
         Navi[i] = ship_spec[config[i]]['Navi']
         Moni[i] = ship_spec[config[i]]['Moni']
         
         # 本来は実際の人数を考慮し，結びつける必要がある
-        num_navi[i] = 0 if Navi == 2 else num_crew_navi/2 if Navi == 1 else num_crew_navi
-        num_engi[i] = 0 if Moni == 1 else num_crew_moni
-        num_cook[i] = 0 if Navi == 2 and Moni == 1 else num_crew_cook
+        num_navi[i] = 0 if Navi[i] == 2 else num_crew_navi/2 if Navi == 1 else num_crew_navi
+        num_engi[i] = 0 if Moni[i] == 1 else num_crew_moni
+        num_cook[i] = 0 if Navi[i] == 2 and Moni[i] == 1 else num_crew_cook
         
         crew_cost[i] = cost['OPEX']['crew_cost'] # May change based on the number
         store_cost[i] = cost['OPEX']['store_cost']
-        maintenance_cost[i] = cost['OPEX']['store_cost']
-        insurance_cost[i] = cost['OPEX']['store_cost']
-        general_cost[i] = cost['OPEX']['store_cost']
-        dock_cost[i] = cost['OPEX']['store_cost']
+        maintenance_cost[i] = cost['OPEX']['maintenance_cost']
+        insurance_cost[i] = cost['OPEX']['insurance_cost']
+        general_cost[i] = cost['OPEX']['general_cost']
+        dock_cost[i] = cost['OPEX']['dock_cost']
         
         # material_cost[i] = cost['CAPEX']['production_cost'] * capex_material_ratio / ship_age
         # integrate_cost[i] = cost['CAPEX']['production_cost'] * (1-capex_material_ratio) / ship_age
         material_cost[i] = cost['CAPEX']['material_cost']
         integrate_cost[i] = cost['CAPEX']['integrate_cost'] * (1
                           + Berth[i] * (tech.integ_factor[0]-1)
-                          + Navi[i] * (tech.integ_factor[1]-1)
+                          + Navi[i] * (tech.integ_factor[1]-1) * 0.5
                           + Moni[i] * (tech.integ_factor[2]-1)) # 220509 Need to reconsider
         add_eq_cost[i] = tech.tech_cost[0] * Berth[i] + tech.tech_cost[1] * Navi[i] + tech.tech_cost[2] * Moni[i]
         
@@ -125,7 +125,8 @@ def calculate_cost(ship_spec, cost, year, tech):
             SCC_Capex[i] += cost['AddCost']['SCC_Capex']*0.5
             SCC_Opex[i] += cost['AddCost']['SCC_Opex']*0.5
             SCC_Personal[i] += cost['AddCost']['SCC_Personal']*0.5
-            acc_ratio_navi[i] = (tech.accident_ratio_base[1]+tech.accident_ratio[1]) * 0.5
+            # acc_ratio_navi[i] = (tech.accident_ratio_base[1]+tech.accident_ratio[1]) * 0.5
+            acc_ratio_navi[i] = acc_navi_semi # Tentativeな例外処理
             fuel_cost_AE[i] -= cost['VOYEX']['fuel_cost_AE'] * AE_crew_rate * num_crew_navi/num_crew_all * 0.5 * trl_rate(tech.TRL[1]+TRLgap_semi)
         elif Navi[i] == 2:
             crew_cost[i] -= cost['OPEX']['crew_cost'] * navi_crew_factor * trl_rate(tech.TRL[1])
@@ -256,15 +257,15 @@ def calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, O
         if Oexp_to_TRL_loop:
             if (tech.Oexp[i] * param.ope_TRL_factor + tech.Rexp[i] * param.rd_TRL_factor) - TRL_need[i] > 0 and tech.TRL[i] < 9:
                 tech.TRL[i] += 1
-                tech.accident_ratio_base[i] = tech.accident_ratio_ini[i] - param.acc_reduction_full * trl_rate(tech.TRL[i])
+                tech.accident_ratio_base[i] = tech.accident_ratio_ini[i] * (1 - param.acc_reduction_full * trl_rate(tech.TRL[i]))
                 tech.Rexp[i] = tech.Rexp[i] - param.rd_need_TRL if tech.Rexp[i] - param.rd_need_TRL > 0 else 0
         else:
             if (tech.Rexp[i] * param.rd_TRL_factor) - TRL_need[i] > 0 and tech.TRL[i] < 9:
                 tech.TRL[i] += 1
-                tech.accident_ratio_base[i] = tech.accident_ratio_ini[i] - param.acc_reduction_full * trl_rate(tech.TRL[i])
+                tech.accident_ratio_base[i] = tech.accident_ratio_ini[i] * (1 - param.acc_reduction_full * trl_rate(tech.TRL[i]))
                 tech.Rexp[i] = tech.Rexp[i] - param.rd_need_TRL if tech.Rexp[i] - param.rd_need_TRL > 0 else 0
 
-        tech.Rexp[i] += param.randd_base # Base investment (TBD)    
+        tech.Rexp[i] += param.randd_base # Base investment (TBD)
         # tech.tech_cost[i] = (10 - tech.TRL[i]) * tech.tech_cost_min[i]
         if Mexp_to_production_loop:
             tech.integ_factor[i] = tech.integ_factor_ini[i]*(tech.Mexp[i]+1)**(-param.integ_b) # if param.manu_max > tech.Mexp[i] else 1
@@ -275,4 +276,6 @@ def calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, O
         else:
             tech.accident_ratio[i] = tech.accident_ratio_base[i]
 
-    return tech
+    acc_navi_semi = tech.accident_ratio_ini[1] * (1 - param.acc_reduction_full * trl_rate(tech.TRL[1]+3)) * (tech.Oexp[1]+1) ** (-param.ope_safety_b) if Oexp_to_safety_loop else tech.accident_ratio_ini[1] * (1 - param.acc_reduction_full * trl_rate(tech.TRL[1]+3))
+                                                                                                                                                                                                          
+    return tech, acc_navi_semi

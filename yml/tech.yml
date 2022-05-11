@@ -1,24 +1,24 @@
 Berth:
   TRL_ini: 6
-  accident: 96
+  accident: 0.0064
   min_cost: 34000
 Moni:
   TRL_ini: 4
-  accident: 32
+  accident: 0.029
   min_cost: 136000
 Navi:
   TRL_ini: 3
-  accident: 78
+  accident: 0.0094
   min_cost: 34000
 Others:
-  acc_reduction_full: 0.7
+  acc_reduction_full: 0.8
   integ_a: 725333
-  integ_b: 0.04
+  integ_b: 0.05
   manu_max: 150
   ope_TRL_factor: 10000
   ope_max: 10000
   ope_safety_b: 0.2
-  randd_base: 4000000
+  randd_base: 0
   rd_TRL_factor: 1
   rd_need_TRL: 20000000
-  tech_integ_factor: 1.2
+  tech_integ_factor: 1.33

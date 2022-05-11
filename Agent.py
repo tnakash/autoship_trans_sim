@@ -10,24 +10,21 @@ class Investor():
 
     # def investment(self, cost, TRL, year, delay, invest, budget):
     def invest(self, tech):
-        if self.invest_tech == 'Berth':
-            # tech[self.invest_tech].Rexp += self.invest_amount
+        if self.invest_tech == 'Berth' and tech.TRL[0] < 9:
             tech.Rexp[0] += self.invest_amount
-        elif self.invest_tech == 'Navi':
-            # tech.navi_exp += self.invest_amount
+        elif self.invest_tech == 'Navi' and tech.TRL[1] < 9:
             tech.Rexp[1] += self.invest_amount
-        elif self.invest_tech == 'Moni':
-            # tech.moni_exp += self.invest_amount
+        elif self.invest_tech == 'Moni' and tech.TRL[2] < 9:
             tech.Rexp[2] += self.invest_amount
-        elif self.invest_tech == 'All':
+        else:
             for i in range(3):
                 tech.Rexp[i] += self.invest_amount / 3
-
+        
         return tech
 
 class ShipOwner:
     # def __init__(self, economy, environment, safety, labour, learning):
-    def __init__(self, economy=1.0, safety=0.0, current_fleet=None, num_newbuilding=None, estimated_loss=10000000):
+    def __init__(self, economy=1.0, safety=1.0, current_fleet=None, num_newbuilding=None, estimated_loss=10000000):
     # def __init__(self, economy=1.0, environment=0.0, safety=0.0, labour=0.0, current_fleet=None, num_newbuilding=None):
         self.economy = economy
         # self.environment = environment
@@ -66,7 +63,7 @@ class ShipOwner:
             select_parameter[i] += 99999999 if tech.TRL[1] < TRLreg else 0
         for i in moni_list:
             select_parameter[i] += 99999999 if tech.TRL[2] < TRLreg else 0
-
+        
         select = select_parameter.idxmin()
         return select
 

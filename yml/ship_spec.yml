@@ -1,59 +1,59 @@
-Config0:
+config0:
   Berth: 0
   Navi: 0
   Moni: 0
 
-Config1:
+config1:
   Berth: 1
   Navi: 0
   Moni: 0
 
-Config2:
+config2:
   Berth: 0
   Navi: 1
   Moni: 0
 
-Config3:
+config3:
   Berth: 0
   Navi: 2
   Moni: 0
 
-Config4:
+config4:
   Berth: 0
   Navi: 0
   Moni: 1
 
-Config5:
+config5:
   Berth: 1
   Navi: 1
   Moni: 0
 
-Config6:
+config6:
   Berth: 1
   Navi: 2
   Moni: 0
 
-Config7:
+config7:
   Berth: 1
   Navi: 0
   Moni: 1
 
-Config8:
+config8:
   Berth: 0
   Navi: 1
   Moni: 1
 
-Config9:
+config9:
   Berth: 0
   Navi: 2
   Moni: 1
 
-Config10:
+config10:
   Berth: 1
   Navi: 1
   Moni: 1
 
-Config11:
+config11:
   Berth: 1
   Navi: 2
   Moni: 1
