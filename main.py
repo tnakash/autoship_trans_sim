@@ -158,11 +158,11 @@ def main():
         building = Owner.fleet[Owner.fleet.year >= start_year]
 
         # Visualize results                        
-        """
-        Number of new shipbuilding[ship]
-        """
+        # """
+        # Number of new shipbuilding[ship]
+        # """
         building.set_index("year", inplace=True)
-        st.area_chart(building)
+        # st.area_chart(building)
         
         Owner.fleet.set_index("year", inplace=True)
         fleet = building
