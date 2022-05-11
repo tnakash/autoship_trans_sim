@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 def main():    
     img = Image.open('fig/logo.png')
-    st.image(img, width = 300)
+    st.sidebar.image(img, width = 300)
     st.markdown('#### 1. Scenario Setting')
 
     # Selecting params for simulation scenario
@@ -37,13 +37,15 @@ def main():
     st.sidebar.write("Parameters for ship adoption")
     economy = st.sidebar.slider('Profitability weight[-]',0.0,1.0,1.0)
     safety = st.sidebar.slider('Safety weight[-]',0.0,1.0,0.5) 
-    estimated_loss = st.sidebar.slider('Estimated average accident loss[USD]',0,50000000,10000000)
+    # estimated_loss = st.sidebar.slider('Estimated average accident loss[USD]',0,50000000,10000000)
+    estimated_loss = st.number_input('Estimated average accident loss[USD]', value=10000000)
     
     # Selecting params for Investors        
     st.sidebar.markdown('### 2.2 Manufacturer (R&D Investor))')
     st.sidebar.write("Technology type and Amount of investment")    
     invest_tech = st.sidebar.selectbox("Investment Strategy",["All","Berth","Navi","Moni"])
-    invest_amount = st.sidebar.slider('Investment Amount [USD/year]',0,1000000,500000)
+    # invest_amount = st.sidebar.slider('Investment Amount [USD/year]',0,1000000,500000)
+    invest_amount = st.sidebar.number_input('Investment Amount [USD/year]',value=500000)
     # invest_berth = st.sidebar.slider('Investment Amount (Berth)',0,2000000,2000000)
     # invest_navi = st.sidebar.slider('Investment Amount (Navi)',0,2000000,2000000)
     # invest_moni = st.sidebar.slider('Investment Amount (Moni)',0,2000000,2000000)
@@ -53,11 +55,14 @@ def main():
     st.sidebar.write("Type and amount of subsidy")    
     # subsidy_type = st.sidebar.selectbox("Subsidy for",["R&D","Adoption"])
     # subsidy_amount = st.sidebar.slider('Subsidy Amount',0,200000,100000)
-    subsidy_RandD = st.sidebar.slider('Subsidy Amount (R&D)[USD/year]',0,20000000,10000000)
-    subsidy_Adoption =  st.sidebar.slider('Subsidy Amount (Adoption)[USD/year]',0,20000000,0)
+    # subsidy_RandD = st.sidebar.slider('Subsidy Amount (R&D)[USD/year]',0,20000000,10000000)
+    subsidy_RandD = st.sidebar.number_input('Subsidy Amount (R&D)[USD/year]', value=5000000)
+    # subsidy_Adoption =  st.sidebar.slider('Subsidy Amount (Adoption)[USD/year]',0,20000000,0)
+    subsidy_Adoption = st.sidebar.number_input('Subsidy Amount (Adoption)[USD/year]', value=0)
     if subsidy_Adoption > 0:
-        sub_list_min, sub_list_max = st.sidebar.slider('Give subsidy from Config. ',1,11,(9,11))
-        sub_list = range(sub_list_min, sub_list_max)
+        #sub_list_min, sub_list_max = st.sidebar.slider('Give subsidy from Config. ',1,11,(9,11))
+        #sub_list = range(sub_list_min, sub_list_max)
+        sub_list = st.sidebar.multiselect('Give subsidy from Config. ', range(12), default=range(1,12))
     TRLreg = st.sidebar.selectbox('TRL regulation (minimum TRL for deployment)', (7, 8))
     
     # Set agents
@@ -83,7 +88,8 @@ def main():
     integ_b = st.slider('Integration cost reduction ratio b (y = ax**(-b))',0.00,0.1,0.04)
     ope_safety_b = st.slider('Accident reduction ratio b (y = ax**(-b))', 0.0,1.0,0.2)
     acc_reduction_full = st.slider('Human Erron Rate [-]', 0.0, 1.0, 0.7)
-    ope_TRL_factor = st.slider('Operational experience R&D value (USD/times)',0.0,10.0,0.4)
+    # ope_TRL_factor = st.slider('Operational experience R&D value (USD/times)',0,10000,10000)
+    ope_TRL_factor = st.number_input('Operational experience R&D value (USD/times)', value=10000)
     rd_need_TRL = st.slider('Necessary R&D Amount for 1TRL-up (MUSD(*year)/TRL)',1,30,20) * 1000000
     randd_base = st.slider('Base R&D Amount (without Investment) (MUSD/year)',0,30,1) * 1000000
     # manu_max = st.slider('Max Manufacturing times (ship)',1,1000,100)
@@ -230,6 +236,7 @@ def main():
 
         if st.session_state.Year >= end_year:
             st.write('Simulation Done!! (Please push "Clear Cache (Ctrl+C)" and "Rerun (Ctrl+R)" from the Top-Right Hamburger Menu)')
+            st.session_state['Year'] = start_year
 
         '''
         ### Download Results

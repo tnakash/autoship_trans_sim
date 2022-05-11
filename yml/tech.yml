@@ -15,10 +15,10 @@ Others:
   integ_a: 725333
   integ_b: 0.04
   manu_max: 150
-  ope_TRL_factor: 0.4
+  ope_TRL_factor: 10000
   ope_max: 10000
   ope_safety_b: 0.2
-  randd_base: 1000000
+  randd_base: 4000000
   rd_TRL_factor: 1
   rd_need_TRL: 20000000
   tech_integ_factor: 1.2
