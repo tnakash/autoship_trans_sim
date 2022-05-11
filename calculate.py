@@ -79,7 +79,7 @@ def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi):
         Moni[i] = ship_spec[config[i]]['Moni']
         
         # 本来は実際の人数を考慮し，結びつける必要がある
-        num_navi[i] = 0 if Navi[i] == 2 else num_crew_navi/2 if Navi == 1 else num_crew_navi
+        num_navi[i] = 0 if Navi[i] == 2 else num_crew_navi/2 if Navi[i] == 1 else num_crew_navi
         num_engi[i] = 0 if Moni[i] == 1 else num_crew_moni
         num_cook[i] = 0 if Navi[i] == 2 and Moni[i] == 1 else num_crew_cook
         
