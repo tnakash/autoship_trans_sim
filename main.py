@@ -315,7 +315,7 @@ def main():
         '''
         ### Download Results
         '''
-        st.download_button('Download result files (compressed)',open(DIR+'/'+casename+'.zip', 'br'), casename+'.zip', disabled=True)
+        st.download_button('Download result files (compressed)',open(DIR+'/'+casename+'.zip', 'br'), casename+'.zip')
 
 if __name__ =='__main__':
     '''
