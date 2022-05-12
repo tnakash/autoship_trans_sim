@@ -6,3 +6,4 @@ Pillow==9.0.1
 matplotlib==3.5.1
 zipp==3.7.0
 glob
+numpy
