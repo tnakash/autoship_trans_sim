@@ -97,7 +97,7 @@ def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi):
                           + Berth[i] * (tech.integ_factor[0]-1)
                           + Navi[i] * (tech.integ_factor[1]-1) * 0.5
                           + Moni[i] * (tech.integ_factor[2]-1)) # 220509 Need to reconsider
-        add_eq_cost[i] = tech.tech_cost[0] * Berth[i] + tech.tech_cost[1] * Navi[i] + tech.tech_cost[2] * Moni[i]
+        add_eq_cost[i] = tech.tech_cost[0] * Berth[i] + tech.tech_cost[1] * Navi[i] * 0.5 + tech.tech_cost[2] * Moni[i]
         
         port_call[i] = cost['VOYEX']['port_call']
         fuel_cost_ME[i] = cost['VOYEX']['fuel_cost_ME']

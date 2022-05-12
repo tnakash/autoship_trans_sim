@@ -1,8 +1,9 @@
+from tarfile import DIRTYPE
 import matplotlib.pyplot as plt
 import streamlit as st
 import altair as alt 
 
-def show_tradespace_general(a, b, alabel, blabel, title, list, selected_index):
+def show_tradespace_general(a, b, alabel, blabel, title, list, selected_index, directory):
     fig = plt.figure(figsize=(10,10))
         
     plt.scatter(x=a, y=b)
@@ -17,6 +18,7 @@ def show_tradespace_general(a, b, alabel, blabel, title, list, selected_index):
     
     plt.show()
     st.pyplot(fig)
+    fig.savefig(directory+'/'+title+'.png')
 
 def show_tradespace(i, annual_cost, ac_loss, sf_sum, fuel_cost, selected_index):
     if i%10==0: # Need to change
@@ -55,13 +57,24 @@ def show_tradespace(i, annual_cost, ac_loss, sf_sum, fuel_cost, selected_index):
         plt.show()
         st.pyplot(fig)
         
-def show_stackplot(result, label, title):
+def show_stackplot(result, label, title, directory):
     fig = plt.figure(figsize=(20,10))
     ax1 = fig.add_subplot(1, 1, 1)
     ax1.stackplot(result.index, [result[s] for s in label], labels=label)
     ax1.set_title(title)
     ax1.legend(loc="upper left")
     st.pyplot(fig)
+    fig.savefig(directory+'/'+title+'.png')
+
+def show_linechart(x, y, label, title, directory):
+    fig = plt.figure(figsize=(20,10))
+    ax1 = fig.add_subplot(1, 1, 1)
+    ax1.plot(x, y)
+    ax1.set_ylabel(label)
+    ax1.set_title(title)
+    ax1.legend(loc="upper left")
+    st.pyplot(fig)
+    fig.savefig(directory+'/'+title+'.png')
 
 # Show Outputs
 def show_output(result, labels1, spec):
