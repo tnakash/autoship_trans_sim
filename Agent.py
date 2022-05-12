@@ -1,5 +1,3 @@
-import numpy as np
-
 class Investor():
     def __init__(self):
         self.invest_tech = 'None'
@@ -125,7 +123,7 @@ class ShipOwner:
             num_subsidized_ship = self.num_newbuiding['ship'][year] if self.num_newbuiding['ship'][year]<num_subsidized_ship_possible else num_subsidized_ship_possible
             PolicyMaker.sub_used += num_subsidized_ship * PolicyMaker.sub_per_ship
         else:
-            PolicyMaker.sub_per_ship = np.nan
+            PolicyMaker.sub_per_ship = 0
             num_subsidized_ship = 0
         
         self.fleet.at[len(self.fleet.year)-1, 'config'+str(PolicyMaker.sub_select)] = num_subsidized_ship

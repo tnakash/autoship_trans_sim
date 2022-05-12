@@ -1,4 +1,4 @@
-from tarfile import DIRTYPE
+# from tarfile import DIRTYPE
 import matplotlib.pyplot as plt
 import streamlit as st
 import altair as alt 
