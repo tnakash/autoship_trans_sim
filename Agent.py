@@ -145,6 +145,7 @@ class PolicyMaker():
     def __init__(self):
         self.sub_RandD = 0
         self.sub_Adoption = 0
+        self.sub_Experience = 0
         self.sub_select = 0
         self.sub_used = 0
         self.sub_per_ship = 0
@@ -155,12 +156,14 @@ class PolicyMaker():
     #     elif sub_type == 'Adoption':
     #         self.sub_Adoption = sub_amount
 
-    def reset(self, sub_RandD, sub_Adoption):
+    def reset(self, sub_RandD, sub_Adoption, sub_Experience, trial_times):
         self.sub_RandD = sub_RandD
         self.sub_Adoption = sub_Adoption
         self.sub_select = 0
         self.sub_used = 0
         self.sub_per_ship = 0
+        self.sub_Experience = sub_Experience
+        self.trial_times = trial_times
 
     def subsidize_investment(self, investor):
         investor.invest_amount += self.sub_RandD
@@ -175,5 +178,12 @@ class PolicyMaker():
             if (tech.TRL[0] >= TRLreg or spec.Berth[i] == 0) and ((tech.TRL[1] >= TRLreg or spec.Navi[i] == 0) or (tech.TRL[1] >= TRLreg-3 and spec.Navi[i] == 1)) and (tech.TRL[2] >= TRLreg or spec.Moni[i] == 0):
                 self.sub_select = i
                 break
+    
+    def subsidize_experience(self, tech, TRLreg):
+        for i in range(3):
+            if tech.TRL[i] < TRLreg:
+                tech.Mexp[i] += self.sub_Experience/(tech.tech_cost[i] * self.trial_times)
+                tech.Oexp[i] += self.sub_Experience/(tech.tech_cost[i] * self.trial_times)
+                self.sub_used += self.sub_Experience
     
     # def relax_regulation(self):

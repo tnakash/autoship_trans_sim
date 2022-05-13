@@ -1,5 +1,5 @@
 from Agent import ShipOwner, Investor, PolicyMaker
-from output import show_stackplot, show_tradespace_general, show_linechart, show_stackplot
+from output import show_stackplot, show_tradespace_general, show_linechart, show_stackplot, show_tradespace_anime
 from input import get_yml, get_scenario, set_scenario, set_tech
 from calculate import calculate_cost, calculate_tech, get_tech_ini, calculate_TRL_cost
 
@@ -10,8 +10,20 @@ import os
 from PIL import Image
 import zipfile
 import glob
+import copy
 
-def main():    
+def main():
+    crew_list = ['NaviCrew', 'EngiCrew', 'Cook']
+    cost_list = ['OPEX', 'CAPEX', 'VOYEX', 'AddCost']
+    opex_list = ['crew_cost', 'store_cost', 'maintenance_cost', 'insurance_cost', 'general_cost', 'dock_cost']
+    capex_list = ['material_cost', 'integrate_cost', 'add_eq_cost']
+    voyex_list = ['port_call', 'fuel_cost_ME', 'fuel_cost_AE']
+    addcost_list = ['SCC_Capex', 'SCC_Opex', 'SCC_Personal', 'Mnt_in_port']
+    cost_detail_list = opex_list + capex_list + voyex_list + addcost_list 
+    accident_list = ['accident_berth', 'accident_navi', 'accident_moni']
+    config_list = ['config0', 'config1', 'config2', 'config3', 'config4', 'config5', 'config6', 'config7', 'config8', 'config9', 'config10', 'config11']
+    config_list_new = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
+
     img = Image.open('fig/logo.png')
     st.sidebar.image(img, width = 300)
     st.markdown('#### 1. Scenario Setting')
@@ -54,6 +66,8 @@ def main():
     subsidy_RandD = st.sidebar.number_input('Subsidy Amount (R&D)[USD/year]', value=10000000)
     # subsidy_Adoption =  st.sidebar.slider('Subsidy Amount (Adoption)[USD/year]',0,20000000,0)
     subsidy_Adoption = st.sidebar.number_input('Subsidy Amount (Adoption)[USD/year]', value=0)
+    subsidy_Experience = st.sidebar.number_input('Subsidy Amount for immatured tech (e.g. DARPA Grand Challenge)[USD/year]', value=0)
+    trial_times = 10 # succeed:fail = 9:1
     # if subsidy_Adoption > 0:
     #     sub_list = st.sidebar.multiselect('Give subsidy from Config. ', range(12), default=range(1,12))
     TRLreg = st.sidebar.selectbox('TRL regulation (minimum TRL for deployment)', (7, 8))
@@ -83,6 +97,7 @@ def main():
     tech_yml = get_yml('tech')
     ship_spec_yml = get_yml('ship_spec')
     tech, param = get_tech_ini(tech_yml)
+    select_index = []
     
     DIR = "result/"+casename
     if not os.path.exists(DIR):
@@ -106,7 +121,6 @@ def main():
     if next_step:
         if st.session_state['Year'] == start_year:
             st.write("Simulation Started!")
-            
         else:
             # Read temporary saved parameters
             spec = pd.read_csv('csv/spec'+casename+'.csv', index_col=0)
@@ -114,6 +128,7 @@ def main():
             Owner.fleet = pd.read_csv('csv/fleet'+casename+'.csv', index_col=0)
             tech_accum = pd.read_csv('csv/tech'+casename+'.csv', index_col=0)
             tech = tech_accum[-(len(tech_yml)-1):].drop('year', axis=1)
+            # select_index = []
         
         sim_year=st.session_state.Year
         st.write('Simulation from '+str(sim_year)+' to '+str(min(end_year,sim_year+dt_year-1)))         
@@ -121,7 +136,7 @@ def main():
         # Annual iteration           
         for i in range(sim_year-start_year, min(end_year-start_year+1,sim_year-start_year+dt_year), 1):    
             Manufacturer.reset(invest_tech,invest_amount)
-            Regulator.reset(subsidy_RandD, subsidy_Adoption)
+            Regulator.reset(subsidy_RandD, subsidy_Adoption, subsidy_Experience, trial_times)
             # Regulator (Subsidy for Manufacturer) (Increase the investment amount)
             Regulator.subsidize_investment(Manufacturer)
             
@@ -142,11 +157,16 @@ def main():
             # Ship Owner (Adoption and Purchase)
             select = Owner.select_ship(spec_current, tech, TRLreg)
             Owner.purchase_ship(select, i)
+            select_index.append(select) # tentative
             
             # Regulator (Subsidy for Adoption)
             if subsidy_Adoption > 0:
                 Regulator.select_for_sub_adoption(spec_current, tech, TRLreg)
                 Owner.purchase_ship_with_adoption(spec_current, select, tech, i, TRLreg, Regulator)
+            
+            # Regulator (Grand Challenge)
+            if subsidy_Experience > 0:
+                Regulator.subsidize_experience(tech, TRLreg)
 
             # Show Tradespace
             if (start_year+i)%10 == 0:
@@ -167,12 +187,6 @@ def main():
         # proceed year
         st.session_state.Year += dt_year
    
-        # Save Tentative File for iterative simulation (and final results)
-        
-        spec.to_csv(DIR+'/spec_'+casename+'.csv')
-        tech_accum.to_csv(DIR+'/tech_'+casename+'.csv')
-        Owner.fleet.to_csv(DIR+'/fleet_'+casename+'.csv')
-        subsidy_accum.to_csv(DIR+'/subsidy_'+casename+'.csv')
         building = Owner.fleet[Owner.fleet.year >= start_year]
 
         # Visualize results                        
@@ -183,20 +197,35 @@ def main():
         # st.area_chart(building)
         
         Owner.fleet.set_index("year", inplace=True)
-        fleet = building
+        fleet = copy.copy(building)
         for i in range(start_year, end_year+1):
             fleet.loc[i,:] = Owner.fleet.loc[i-ship_age:i,:].sum()
-        
-        crew_list = ['NaviCrew', 'EngiCrew', 'Cook']
-        cost_list = ['OPEX', 'CAPEX', 'VOYEX', 'AddCost']
-        opex_list = ['crew_cost', 'store_cost', 'maintenance_cost', 'insurance_cost', 'general_cost', 'dock_cost']
-        capex_list = ['material_cost', 'integrate_cost', 'add_eq_cost']
-        voyex_list = ['port_call', 'fuel_cost_ME', 'fuel_cost_AE']
-        addcost_list = ['SCC_Capex', 'SCC_Opex', 'SCC_Personal', 'Mnt_in_port']
-        cost_detail_list = opex_list + capex_list + voyex_list + addcost_list 
-        accident_list = ['accident_berth', 'accident_navi', 'accident_moni']
-        config_list = ['config0', 'config1', 'config2', 'config3', 'config4', 'config5', 'config6', 'config7', 'config8', 'config9', 'config10', 'config11']
 
+        totalcost = copy.copy(building)
+        accident = copy.copy(building)
+        
+        for s in config_list:
+            totalcost[s] = 0
+            accident[s] = 0
+        
+        for i in range(start_year, end_year+1):
+            for s in config_list:
+                for c in cost_list:
+                    totalcost[s][i] += spec[(spec['year'] == i) & (spec['config'] == s)][c].mean()
+    
+                for ac in accident_list:
+                    accident[s][i] += spec[(spec['year'] == i) & (spec['config'] == s)][ac].mean()
+        
+        show_tradespace_anime(totalcost, accident, 
+                              "Total Cost(USD/year)", "Accident Ratio (-)", 
+                              config_list, select_index, DIR_FIG)
+        
+        # Save Tentative File for iterative simulation (and final results)
+        spec.to_csv(DIR+'/spec_'+casename+'.csv')
+        tech_accum.to_csv(DIR+'/tech_'+casename+'.csv')
+        Owner.fleet.to_csv(DIR+'/fleet_'+casename+'.csv')
+        subsidy_accum.to_csv(DIR+'/subsidy_'+casename+'.csv')
+        
         """
         Fleet Breakdown [ship]
         """
@@ -312,7 +341,7 @@ def main():
         
         final = {'Full Autonomous Ship introduction (year)': intro_year,
                  'Total Profit [USD]': int(fleet['Profit'].sum()), 
-                 'Total Investment (incl. Subsidy) [USD]': int(subsidy_accum['All_investment'].sum()),
+                 'Total Investment for R&D (incl. Subsidy) [USD]': int(subsidy_accum['All_investment'].sum()),
                  'Total Subsidy [USD]': int(subsidy_accum['Subsidy_used'].sum()), 
                  'Total Accident [times]': int(fleet[accident_list].sum(axis=1).sum())}
         st.write(final)

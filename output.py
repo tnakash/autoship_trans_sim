@@ -2,6 +2,7 @@
 import matplotlib.pyplot as plt
 import streamlit as st
 import altair as alt 
+import matplotlib.animation as animation
 
 def show_tradespace_general(a, b, alabel, blabel, title, list, selected_index, directory):
     fig = plt.figure(figsize=(10,10))
@@ -154,3 +155,42 @@ def get_resultsareachart(result_data):
         .add_selection(hover)
     )
     return (graphbase+ graphpoints+ graphtooltips).interactive()
+
+
+def show_tradespace_anime(a, b, alabel, blabel, list, selected_index, directory):
+    dRangex = [a.min().min()*0.95, a.max().max()*1.01]
+    dRangey = [b.min().min()*0.95, b.max().max()*1.01]
+    fig_scatter = plt.figure()
+    plt_scatter = []
+
+    for i in range(a.index.min(), a.index.max()+1):
+        x_scatter = []
+        x_scatter_select = []
+        # x_annotate = []
+        # for c, j in enumerate(list):
+        # x_scatter = plt.scatter(x=a[a.index == i][j], y=b[b.index == i][j], c=[plt.get_cmap('tab20').colors[c]] for c, j in enumerate(list)))
+        x_scatter = plt.scatter(x=a[a.index == i], y=b[b.index == i]) #, c=[plt.get_cmap('tab20').colors[range(len(list))]])
+        
+        # plt.legend(list, loc="lower right", fontsize=10)#凡例
+        x_scatter_select = plt.scatter(x=a[a.index == i]['config'+str(selected_index[i-a.index.min()])], y=b[a.index == i]['config'+str(selected_index[i-a.index.min()])],
+                                       label=f'Selected (Config{selected_index[i-a.index.min()]})',
+                                       marker='*', c='yellow', edgecolor='k', s=150)
+        
+        # for j in list:
+        #     x_annotate.append(plt.annotate(j, (a[a.index == i][j], b[b.index == i][j])))
+        
+        plt.xlabel(alabel)
+        plt.ylabel(blabel)
+        
+        title = plt.text((dRangex[0]+dRangex[1])/2 , dRangey[1], 
+                         'Profitability vs Safety at {:d}'.format(i),
+                         ha='center', va='bottom',fontsize='large')
+
+        plt_scatter.append([x_scatter,x_scatter_select,title])
+
+    plt.xlim(dRangex[0],dRangex[1])
+    plt.ylim(dRangey[0],dRangey[1])
+    plt.grid(True)
+
+    ani = animation.ArtistAnimation(fig_scatter, plt_scatter, interval=500)
+    ani.save(directory+'/sample.gif', writer="imagemagick")

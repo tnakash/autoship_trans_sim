@@ -1,7 +1,7 @@
 Loop:
-  Manu_loop: false
-  Ope_loop_Safety: false
-  Ope_loop_TRL: false
+  Manu_loop: true
+  Ope_loop_Safety: true
+  Ope_loop_TRL: true
 Operator:
   economy: 1
   estimated_loss: 34000000
@@ -9,7 +9,7 @@ Operator:
 Regulator:
   TRL_regulation: 7
   subsidy_adoption: 0
-  subsidy_randd: 0
+  subsidy_randd: 10000000
 ship_age: 25
 ship_demand:
   annual_growth: 1.01
