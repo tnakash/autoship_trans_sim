@@ -305,7 +305,12 @@ def main():
             st.write('Simulation Done!!')
             st.session_state['Year'] = start_year
         
-        final = {'Full Autonomous Ship introduction (year)': int(fleet[fleet['config11'] > 0].index[0]),
+        if fleet['config11'].sum() > 0:
+            intro_year = int(fleet[fleet['config11'] > 0].index[0])
+        else:
+            intro_year = 'NaN'
+        
+        final = {'Full Autonomous Ship introduction (year)': intro_year,
                  'Total Profit [USD]': int(fleet['Profit'].sum()), 
                  'Total Investment (incl. Subsidy) [USD]': int(subsidy_accum['All_investment'].sum()),
                  'Total Subsidy [USD]': int(subsidy_accum['Subsidy_used'].sum()), 
