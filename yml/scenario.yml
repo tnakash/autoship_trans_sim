@@ -8,7 +8,7 @@ Operator:
   safety: 1
 Regulator:
   TRL_regulation: 7
-  subsidy_adoption: 0
+  subsidy_adoption: 1000000
   subsidy_randd: 10000000
 ship_age: 25
 ship_demand:
