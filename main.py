@@ -52,7 +52,7 @@ def main():
     st.sidebar.write("Technology type and Amount of investment")    
     invest_tech = st.sidebar.selectbox("Investment Strategy",["All","Berth","Navi","Moni"])
     # invest_amount = st.sidebar.slider('Investment Amount [USD/year]',0,1000000,500000)
-    invest_amount = st.sidebar.number_input('Investment Amount [USD/year]',value=500000)
+    invest_amount = st.sidebar.number_input('Investment Amount [USD/year]',value=5000000)
     # invest_berth = st.sidebar.slider('Investment Amount (Berth)',0,2000000,2000000)
     # invest_navi = st.sidebar.slider('Investment Amount (Navi)',0,2000000,2000000)
     # invest_moni = st.sidebar.slider('Investment Amount (Moni)',0,2000000,2000000)
@@ -63,14 +63,14 @@ def main():
     # subsidy_type = st.sidebar.selectbox("Subsidy for",["R&D","Adoption"])
     # subsidy_amount = st.sidebar.slider('Subsidy Amount',0,200000,100000)
     # subsidy_RandD = st.sidebar.slider('Subsidy Amount (R&D)[USD/year]',0,20000000,10000000)
-    subsidy_RandD = st.sidebar.number_input('Subsidy Amount (R&D)[USD/year]', value=10000000)
+    subsidy_RandD = st.sidebar.number_input('Subsidy Amount (R&D)[USD/year]', value=5000000)
     # subsidy_Adoption =  st.sidebar.slider('Subsidy Amount (Adoption)[USD/year]',0,20000000,0)
     subsidy_Adoption = st.sidebar.number_input('Subsidy Amount (Adoption)[USD/year]', value=0)
     subsidy_Experience = st.sidebar.number_input('Subsidy Amount for immatured tech (e.g. DARPA Grand Challenge)[USD/year]', value=0)
     trial_times = 10 # succeed:fail = 9:1
     # if subsidy_Adoption > 0:
     #     sub_list = st.sidebar.multiselect('Give subsidy from Config. ', range(12), default=range(1,12))
-    TRLreg = st.sidebar.selectbox('TRL regulation (minimum TRL for deployment)', (7, 8))
+    TRLreg = st.sidebar.selectbox('TRL regulation (minimum TRL for deployment)', (8, 7))
 
     st.write('1.2 Additional Setting')    
     Mexp_to_production_loop = st.checkbox('Include effect of Manufacturing experience to Production cost',value=True)
@@ -343,7 +343,9 @@ def main():
                  'Total Profit [USD]': int(fleet['Profit'].sum()), 
                  'Total Investment for R&D (incl. Subsidy) [USD]': int(subsidy_accum['All_investment'].sum()),
                  'Total Subsidy [USD]': int(subsidy_accum['Subsidy_used'].sum()), 
-                 'Total Accident [times]': int(fleet[accident_list].sum(axis=1).sum())}
+                 'ROI (R&D Expenditure based)': fleet['Profit'].sum()/subsidy_accum['All_investment'].sum(),
+                 'ROI (Subsidy based)': fleet['Profit'].sum()/subsidy_accum['Subsidy_used'].sum(),
+                 'Total Accident [cases]': int(fleet[accident_list].sum(axis=1).sum())}
         st.write(final)
 
         '''
