@@ -335,17 +335,25 @@ def main():
             st.session_state['Year'] = start_year
         
         if fleet['config11'].sum() > 0:
-            intro_year = int(fleet[fleet['config11'] > 0].index[0])
+            intro_year_full = int(fleet[fleet['config11'] > 0].index[0])
         else:
-            intro_year = 'NaN'
+            intro_year_full = 'NaN'
+
+        intro_year_auto = end_year
+        for i in range(1,11,1):
+            if fleet['config'+str(i)].sum() > 0:
+                intro_year_tmp = int(fleet[fleet['config'+str(i)] > 0].index[0])
+                intro_year_auto = intro_year_tmp if intro_year_tmp < intro_year_auto else intro_year_auto 
         
-        final = {'Full Autonomous Ship introduction (year)': intro_year,
-                 'Total Profit [USD]': int(fleet['Profit'].sum()), 
-                 'Total Investment for R&D (incl. Subsidy) [USD]': int(subsidy_accum['All_investment'].sum()),
-                 'Total Subsidy [USD]': int(subsidy_accum['Subsidy_used'].sum()), 
+        final = {'Autonomous Ship introduction (year)': intro_year_auto,
+                 'Full Autonomous Ship introduction (year)': intro_year_full,
+                 'Total Profit (USD)': int(fleet['Profit'].sum()), 
+                 'Total Investment for R&D (incl. Subsidy) (USD)': int(subsidy_accum['All_investment'].sum()),
+                 'Total Subsidy (USD)': int(subsidy_accum['Subsidy_used'].sum()), 
                  'ROI (R&D Expenditure based)': fleet['Profit'].sum()/subsidy_accum['All_investment'].sum(),
                  'ROI (Subsidy based)': fleet['Profit'].sum()/subsidy_accum['Subsidy_used'].sum(),
-                 'Total Accident [cases]': int(fleet[accident_list].sum(axis=1).sum())}
+                 'Total Accident (cases)': int(fleet[accident_list].sum(axis=1).sum()),
+                 'Total Number of Seafarer (person)': int(fleet[crew_list].sum(axis=1).sum())}
         st.write(final)
 
         '''
