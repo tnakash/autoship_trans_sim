@@ -9,7 +9,7 @@ Operator:
 Regulator:
   TRL_regulation: 8
   subsidy_adoption: 0
-  subsidy_randd: 5000003
+  subsidy_randd: 5000000
 ship_age: 25
 ship_demand:
   annual_growth: 1.01

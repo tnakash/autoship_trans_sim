@@ -67,7 +67,7 @@ def main():
     # subsidy_Adoption =  st.sidebar.slider('Subsidy Amount (Adoption)[USD/year]',0,20000000,0)
     subsidy_Adoption = st.sidebar.number_input('Subsidy Amount (Adoption)[USD/year]', value=0)
     subsidy_Experience = st.sidebar.number_input('Subsidy Amount for immatured tech (e.g. DARPA Grand Challenge)[USD/year]', value=0)
-    trial_times = 10 # succeed:fail = 9:1
+    trial_times = 1 # succeed:fail = 9:1
     # if subsidy_Adoption > 0:
     #     sub_list = st.sidebar.multiselect('Give subsidy from Config. ', range(12), default=range(1,12))
     TRLreg = st.sidebar.selectbox('TRL regulation (minimum TRL for deployment)', (8, 7))

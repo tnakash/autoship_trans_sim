@@ -1,4 +1,6 @@
 # from tarfile import DIRTYPE
+from re import M
+import tracemalloc
 import matplotlib.pyplot as plt
 import streamlit as st
 import altair as alt 
@@ -160,37 +162,49 @@ def get_resultsareachart(result_data):
 def show_tradespace_anime(a, b, alabel, blabel, list, selected_index, directory):
     dRangex = [a.min().min()*0.95, a.max().max()*1.01]
     dRangey = [b.min().min()*0.95, b.max().max()*1.01]
-    fig_scatter = plt.figure()
-    plt_scatter = []
+    fig = plt.figure(figsize=(8,8))
+    ax = plt.subplot(1,1,1)
+    cmap = plt.get_cmap("tab20")
+    ims = []
+    legends_flag = True
 
     for i in range(a.index.min(), a.index.max()+1):
-        x_scatter = []
-        x_scatter_select = []
+        # select = []
         # x_annotate = []
-        # for c, j in enumerate(list):
-        # x_scatter = plt.scatter(x=a[a.index == i][j], y=b[b.index == i][j], c=[plt.get_cmap('tab20').colors[c]] for c, j in enumerate(list)))
-        x_scatter = plt.scatter(x=a[a.index == i], y=b[b.index == i]) #, c=[plt.get_cmap('tab20').colors[range(len(list))]])
+        image = []
+        
+        for c, j in enumerate(list):
+            # image += ax.plot(a[a.index == i][j], b[b.index == i][j], ".", markersize=12, color=cmap(c), label=j) # for c, j in enumerate(list)))
+            image += ax.plot(a[a.index == i][j], b[b.index == i][j], ".", a[a.index <= i][j], b[b.index <= i][j], "-", markersize=15, linewidth=1, color=cmap(c), label=j) # for c, j in enumerate(list)))
         
         # plt.legend(list, loc="lower right", fontsize=10)#凡例
-        x_scatter_select = plt.scatter(x=a[a.index == i]['config'+str(selected_index[i-a.index.min()])], y=b[a.index == i]['config'+str(selected_index[i-a.index.min()])],
-                                       label=f'Selected (Config{selected_index[i-a.index.min()]})',
-                                       marker='*', c='yellow', edgecolor='k', s=150)
+        # select = plt.scatter(x=a[a.index == i]['config'+str(selected_index[i-a.index.min()])], y=b[a.index == i]['config'+str(selected_index[i-a.index.min()])],
+        #                                label=f'Selected (Config{selected_index[i-a.index.min()]})',
+        #                                marker='*', c='yellow', edgecolor='k', s=150)
+        image += ax.plot(a[a.index == i]['config'+str(selected_index[i-a.index.min()])], b[a.index == i]['config'+str(selected_index[i-a.index.min()])], '*',
+                                       label=f'Selected', markersize =6, color='yellow') #, edgecolor='k', s=150)
         
         # for j in list:
         #     x_annotate.append(plt.annotate(j, (a[a.index == i][j], b[b.index == i][j])))
         
-        plt.xlabel(alabel)
-        plt.ylabel(blabel)
+        ax.set_xlabel(alabel)
+        ax.set_ylabel(blabel)
+        image.append(ax.text(6200000, 0.048, 'Profitability vs Safety at {:d}'.format(i), fontsize=10))
+        ims.append(image)
+                
+        # title = plt.text((dRangex[0]+dRangex[1])/2 , dRangey[1], 
+        #                  'Profitability vs Safety at {:d}'.format(i),
+        #                  ha='center', va='bottom',fontsize='large')
+
+        # plt_scatter.append([image,select,title])
+        if legends_flag:
+            ax.legend(loc='lower right', bbox_to_anchor=(1.15, 0))
+            legends_flag = False
+            # plt.grid(True)
         
-        title = plt.text((dRangex[0]+dRangex[1])/2 , dRangey[1], 
-                         'Profitability vs Safety at {:d}'.format(i),
-                         ha='center', va='bottom',fontsize='large')
+        ax.set_xlim(dRangex[0],dRangex[1])
+        ax.set_ylim(dRangey[0],dRangey[1])
 
-        plt_scatter.append([x_scatter,x_scatter_select,title])
 
-    plt.xlim(dRangex[0],dRangex[1])
-    plt.ylim(dRangey[0],dRangey[1])
-    plt.grid(True)
-
-    ani = animation.ArtistAnimation(fig_scatter, plt_scatter, interval=500)
-    ani.save(directory+'/sample.gif', writer="imagemagick")
+    ani = animation.ArtistAnimation(fig, ims, interval=300)
+    ani.save(directory+'/tradespace.gif', writer="imagemagick")
