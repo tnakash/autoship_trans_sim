@@ -1,6 +1,3 @@
-# from tarfile import DIRTYPE
-from re import M
-import tracemalloc
 import matplotlib.pyplot as plt
 import streamlit as st
 import altair as alt 
@@ -19,7 +16,6 @@ def show_tradespace_general(a, b, alabel, blabel, title, list, selected_index, d
     for j, label in enumerate(list):
         plt.annotate(label, (a[j], b[j]))
     
-    plt.show()
     st.pyplot(fig)
     fig.savefig(directory+'/'+title+'.png')
 
@@ -78,56 +74,15 @@ def show_linechart(x, y, label, title, directory):
     ax1.legend(loc="upper left")
     st.pyplot(fig)
     fig.savefig(directory+'/'+title+'.png')
-
-# Show Outputs
-def show_output(result, labels1, spec):
-    fig = plt.figure(figsize=(20,10)) #.gca()
-    ax1 = fig.add_subplot(2, 2, 1)
-    ax2 = fig.add_subplot(2, 2, 2)
-    ax3 = fig.add_subplot(2, 2, 3)
-    ax4 = fig.add_subplot(2, 2, 4)
-    label_config = ['config0', 'config1', 'config2', 'config3', 'config4', 'config5', 'config6', 'config7', 'config8', 'config9', 'config10', 'config11']
-
-    ax1.stackplot(result.year, [result[s] for s in label_config], labels=label_config)
-#    ax1.xaxis.set_major_locator(MaxNLocator(integer=True))
-    ax1.set_title("Number of ships for each autonomous level")
-    ax1.legend(loc="upper left")
-
-    labels2 = ['LossDamagePerVessel']
-    ax2.stackplot(result.Year, result.LossDamagePerVessel, labels=labels2)
-#    ax2.xaxis.set_major_locator(MaxNLocator(integer=True))
-    ax2.set_title("Number of Expected Accidents")
-    ax2.legend(loc="upper right")
-
-    labels3 = ['Seafarer', 'ShoreOperator']
-    ax3.stackplot(result.Year, result.Seafarer, result.ShoreOperator, labels=labels3)
-#    ax3.xaxis.set_major_locator(MaxNLocator(integer=True))
-    ax3.set_title("Number of Seafarers")
-    ax3.legend(loc="upper right")
-
-    labels4 = ['LabourCost', 'LossDamage', 'FuelCost', 'OpeCost', 'OnboardAsset', 'ShoreAsset']
-    ax4.stackplot(result.Year, result.LabourCost, result.LossDamage, result.FuelCost, result.OpeCost, result.OnboardAsset, result.ShoreAsset, labels=labels4)
-#    ax4.xaxis.set_major_locator(MaxNLocator(integer=True))
-    ax4.set_title("Cost for Each Vessel")
-    ax4.legend(loc="upper right")
-    # plt.show()
-    st.pyplot(fig)
-
-    for s in labels1:
-        i = spec.index[spec.ship_type == s].tolist()[0]
-        st.write(s, '| SituationAwareness:', spec.SituationAwareness[i], '| Planning:', spec.Planning[i], '| Control:', spec.Control[i], '| Remote:', spec.Remote[i])
-        
+ 
 def get_resultsareachart(result_data):
-
     result_data = result_data.reset_index().melt('year', var_name='type', value_name='y')
-
     hover = alt.selection_single(
         fields=["year"],
         nearest=True,
         on="mouseover",
         empty="none",
     )
-
     graphbase = (
         alt.Chart(result_data)
         .mark_area()
@@ -137,10 +92,8 @@ def get_resultsareachart(result_data):
             color="type",
         )
     )
-
     # Draw points on the line, and highlight based on selection
     graphpoints = graphbase.transform_filter(hover).mark_circle(size=65)
-
     # Draw a rule at the location of the selection
     graphtooltips = (
         alt.Chart(result_data)
@@ -158,7 +111,6 @@ def get_resultsareachart(result_data):
     )
     return (graphbase+ graphpoints+ graphtooltips).interactive()
 
-
 def show_tradespace_anime(a, b, alabel, blabel, list, selected_index, directory):
     dRangex = [a.min().min()*0.95, a.max().max()*1.01]
     dRangey = [b.min().min()*0.95, b.max().max()*1.01]
@@ -169,42 +121,26 @@ def show_tradespace_anime(a, b, alabel, blabel, list, selected_index, directory)
     legends_flag = True
 
     for i in range(a.index.min(), a.index.max()+1):
-        # select = []
-        # x_annotate = []
         image = []
         
         for c, j in enumerate(list):
-            # image += ax.plot(a[a.index == i][j], b[b.index == i][j], ".", markersize=12, color=cmap(c), label=j) # for c, j in enumerate(list)))
             image += ax.plot(a[a.index == i][j], b[b.index == i][j], ".", a[a.index <= i][j], b[b.index <= i][j], "-", markersize=15, linewidth=1, color=cmap(c), label=j) # for c, j in enumerate(list)))
         
-        # plt.legend(list, loc="lower right", fontsize=10)#凡例
-        # select = plt.scatter(x=a[a.index == i]['config'+str(selected_index[i-a.index.min()])], y=b[a.index == i]['config'+str(selected_index[i-a.index.min()])],
-        #                                label=f'Selected (Config{selected_index[i-a.index.min()]})',
-        #                                marker='*', c='yellow', edgecolor='k', s=150)
         image += ax.plot(a[a.index == i]['config'+str(selected_index[i-a.index.min()])], b[a.index == i]['config'+str(selected_index[i-a.index.min()])], '*',
                                        label=f'Selected', markersize =6, color='yellow') #, edgecolor='k', s=150)
         
-        # for j in list:
-        #     x_annotate.append(plt.annotate(j, (a[a.index == i][j], b[b.index == i][j])))
-        
         ax.set_xlabel(alabel)
         ax.set_ylabel(blabel)
+        # Need to adjust the point to the center
         image.append(ax.text(6200000, 0.048, 'Profitability vs Safety at {:d}'.format(i), fontsize=10))
         ims.append(image)
                 
-        # title = plt.text((dRangex[0]+dRangex[1])/2 , dRangey[1], 
-        #                  'Profitability vs Safety at {:d}'.format(i),
-        #                  ha='center', va='bottom',fontsize='large')
-
-        # plt_scatter.append([image,select,title])
         if legends_flag:
             ax.legend(loc='lower right', bbox_to_anchor=(1.15, 0))
             legends_flag = False
-            # plt.grid(True)
         
         ax.set_xlim(dRangex[0],dRangex[1])
         ax.set_ylim(dRangey[0],dRangey[1])
-
 
     ani = animation.ArtistAnimation(fig, ims, interval=300)
     ani.save(directory+'/tradespace.gif', writer="imagemagick")

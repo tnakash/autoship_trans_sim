@@ -211,10 +211,10 @@ def main():
         for i in range(start_year, end_year+1):
             for s in config_list:
                 for c in cost_list:
-                    totalcost[s][i] += spec[(spec['year'] == i) & (spec['config'] == s)][c].mean()
+                    totalcost.loc[i,s] += spec[(spec['year'] == i) & (spec['config'] == s)][c].mean()
     
                 for ac in accident_list:
-                    accident[s][i] += spec[(spec['year'] == i) & (spec['config'] == s)][ac].mean()
+                    accident.loc[i,s] += spec[(spec['year'] == i) & (spec['config'] == s)][ac].mean()
         
         show_tradespace_anime(totalcost, accident, 
                               "Total Cost(USD/year)", "Accident Ratio (-)", 
@@ -237,20 +237,20 @@ def main():
         for i in range(start_year, end_year+1):
             for c in cost_list:
                 for s in config_list:
-                    fleet[c][i] += fleet[s][i] * spec[(spec['year'] == i) & (spec['config'] == s)][c].mean()
-                    fleet['Profit'][i] += fleet[s][i] * (spec[(spec['year'] == i) & (spec['config'] == 'config0')][c].mean() - spec[(spec['year'] == i) & (spec['config'] == s)][c].mean())
+                    fleet.loc[i,c] += fleet.loc[i,s] * spec[(spec['year'] == i) & (spec['config'] == s)][c].mean()
+                    fleet.loc[i,'Profit'] += fleet.loc[i,s] * (spec[(spec['year'] == i) & (spec['config'] == 'config0')][c].mean() - spec[(spec['year'] == i) & (spec['config'] == s)][c].mean())
                     
             for c in accident_list:
                 for s in config_list:
-                    fleet[c][i] += fleet[s][i] * spec[(spec['year'] == i) & (spec['config'] == s)][c].mean()
+                    fleet.loc[i,c] += fleet.loc[i,s] * spec[(spec['year'] == i) & (spec['config'] == s)][c].mean()
 
             for c in crew_list:
                 for s in config_list:
-                    fleet[c][i] += fleet[s][i] * spec[(spec['year'] == i) & (spec['config'] == s)][c].mean()
+                    fleet.loc[i,c] += fleet.loc[i,s] * spec[(spec['year'] == i) & (spec['config'] == s)][c].mean()
         
             for c in cost_detail_list:
                 for s in config_list:
-                    fleet[c][i] += fleet[s][i] * spec[(spec['year'] == i) & (spec['config'] == s)][c].mean()
+                    fleet.loc[i,c] += fleet.loc[i,s] * spec[(spec['year'] == i) & (spec['config'] == s)][c].mean()
 
 
         """
