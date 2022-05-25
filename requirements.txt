@@ -6,3 +6,4 @@ Pillow
 matplotlib
 zipp
 seaborn
+adjustText
