@@ -314,8 +314,9 @@ def main():
         """
         Accident of each type of autonomous ship ≒ [accidents/year]
         """
-        Tech_accident = pd.DataFrame({"Berth_accident": Berth.accident_ratio, "Navi_accident": Navi.accident_ratio, "Moni_accident": Moni.accident_ratio})
-        st.line_chart(Tech_accident)
+        show_linechart_three(Berth.index, Berth.accident_ratio, Navi.accident_ratio, Moni.accident_ratio, "Annual Accident Ratio [case/ship]", "Accident Ratio", DIR_FIG, "lower left")
+        # Tech_accident = pd.DataFrame({"Berth_accident": Berth.accident_ratio, "Navi_accident": Navi.accident_ratio, "Moni_accident": Moni.accident_ratio})
+        # st.line_chart(Tech_accident)
         # results_accident =get_resultsareachart(Tech_accident)
         # st.altair_chart(results_accident, use_container_width=True)
         
