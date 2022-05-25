@@ -1,5 +1,5 @@
 from Agent import ShipOwner, Investor, PolicyMaker
-from output import show_stackplot, show_tradespace_general, show_linechart, show_stackplot, show_tradespace_anime
+from output import show_stackplot, show_linechart_two, show_linechart_three, show_tradespace_general, show_linechart, show_tradespace_anime
 from input import get_yml, get_scenario, set_scenario, set_tech
 from calculate import calculate_cost, calculate_tech, get_tech_ini, calculate_TRL_cost
 
@@ -12,18 +12,18 @@ import zipfile
 import glob
 import copy
 
-def main():
-    crew_list = ['NaviCrew', 'EngiCrew', 'Cook']
-    cost_list = ['OPEX', 'CAPEX', 'VOYEX', 'AddCost']
-    opex_list = ['crew_cost', 'store_cost', 'maintenance_cost', 'insurance_cost', 'general_cost', 'dock_cost']
-    capex_list = ['material_cost', 'integrate_cost', 'add_eq_cost']
-    voyex_list = ['port_call', 'fuel_cost_ME', 'fuel_cost_AE']
-    addcost_list = ['SCC_Capex', 'SCC_Opex', 'SCC_Personal', 'Mnt_in_port']
-    cost_detail_list = opex_list + capex_list + voyex_list + addcost_list 
-    accident_list = ['accident_berth', 'accident_navi', 'accident_moni']
-    config_list = ['config0', 'config1', 'config2', 'config3', 'config4', 'config5', 'config6', 'config7', 'config8', 'config9', 'config10', 'config11']
-    config_list_new = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
+crew_list = ['NaviCrew', 'EngiCrew', 'Cook']
+cost_list = ['OPEX', 'CAPEX', 'VOYEX', 'AddCost']
+opex_list = ['crew_cost', 'store_cost', 'maintenance_cost', 'insurance_cost', 'general_cost', 'dock_cost']
+capex_list = ['material_cost', 'integrate_cost', 'add_eq_cost']
+voyex_list = ['port_call', 'fuel_cost_ME', 'fuel_cost_AE']
+addcost_list = ['SCC_Capex', 'SCC_Opex', 'SCC_Personal', 'Mnt_in_port']
+cost_detail_list = opex_list + capex_list + voyex_list + addcost_list 
+accident_list = ['accident_berth', 'accident_navi', 'accident_moni']
+config_list = ['config0', 'config1', 'config2', 'config3', 'config4', 'config5', 'config6', 'config7', 'config8', 'config9', 'config10', 'config11']
+config_list_new = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
 
+def main():
     img = Image.open('fig/logo.png')
     st.sidebar.image(img, width = 300)
     st.markdown('#### 1. Scenario Setting')
@@ -81,6 +81,8 @@ def main():
     ope_safety_b = st.slider('Accident reduction ratio b (y = ax**(-b))', 0.0,1.0,0.2)
     ope_TRL_factor = st.number_input('Operational experience R&D value (USD/times)', value=10000)
     set_tech(ope_safety_b, ope_TRL_factor)
+    
+    animation = st.checkbox('Output animation',value=True)
     
     set_scenario(start_year, end_year, numship_init, numship_growth, ship_age, economy, safety, estimated_loss, subsidy_RandD, subsidy_Adoption, TRLreg, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
     # Get scenario from yml file (just made)    
@@ -216,9 +218,10 @@ def main():
                 for ac in accident_list:
                     accident.loc[i,s] += spec[(spec['year'] == i) & (spec['config'] == s)][ac].mean()
         
-        show_tradespace_anime(totalcost, accident, 
-                              "Total Cost(USD/year)", "Accident Ratio (-)", 
-                              config_list, select_index, DIR_FIG)
+        if animation:
+            show_tradespace_anime(totalcost, accident, 
+                                "Total Cost(USD/year)", "Accident Ratio (-)", 
+                                config_list, select_index, DIR_FIG)
         
         # Save Tentative File for iterative simulation (and final results)
         spec.to_csv(DIR+'/spec_'+casename+'.csv')
@@ -275,16 +278,12 @@ def main():
         show_stackplot(fleet, fleet[crew_list], "Number of Seafarers [people]", DIR_FIG)        
         
         """
-        Profit of the Industry (Difference from 'existing vessel' fleet) [USD]
+        Profit of the Industry (Difference from 'existing vessel' fleet) [USD] and Subsidy used [USD]
+
         """ 
-        # st.line_chart(fleet['Profit'])
-        show_linechart(fleet.index, fleet['Profit'], "Profit [USD]", "Profit of the Industry", DIR_FIG)
-        
-        """
-        Subsidy used [USD]
-        """         
-        # st.line_chart(subsidy_accum['Subsidy_used'])
-        show_linechart(subsidy_accum.index, subsidy_accum['Subsidy_used'], "Subsidy used [USD]", "Subsidy used", DIR_FIG)
+        show_linechart_two(fleet.index, fleet['Profit'], subsidy_accum['Subsidy_used'], "Profit and subsidy [USD]", "Profit of the Industry", DIR_FIG)
+        # show_linechart(fleet.index, fleet['Profit'], "Profit [USD]", "Profit of the Industry", DIR_FIG)        
+        # show_linechart(subsidy_accum.index, subsidy_accum['Subsidy_used'], "Subsidy used [USD]", "Subsidy used", DIR_FIG)
         
         """
         Technology Development
@@ -298,10 +297,10 @@ def main():
         Moni.set_index("year", inplace=True)
         
         # Visualization                    
-        TRL = pd.DataFrame({"Berth": Berth.TRL, "Navi": Navi.TRL, "Moni": Moni.TRL})
-        st.line_chart(TRL)
-        Integ_cost = pd.DataFrame({"Berth_Integration_Cost": Berth.integ_factor, "Navi_Integration_Cost": Navi.integ_factor, "Moni_Integration_Cost": Moni.integ_factor})
-        st.line_chart(Integ_cost)
+        # TRL = pd.DataFrame({"Berth": Berth.TRL, "Navi": Navi.TRL, "Moni": Moni.TRL})
+        # st.line_chart(TRL)
+        # Integ_cost = pd.DataFrame({"Berth_Integration_Cost": Berth.integ_factor, "Navi_Integration_Cost": Navi.integ_factor, "Moni_Integration_Cost": Moni.integ_factor})
+        # st.line_chart(Integ_cost)
         Rexp = pd.DataFrame({"Berth_Rexp": Berth.Rexp, "Navi_Rexp": Navi.Rexp, "Moni_Rexp": Moni.Rexp})
         st.line_chart(Rexp)
         Mexp = pd.DataFrame({"Berth_Mexp": Berth.Mexp, "Navi_Mexp": Navi.Mexp, "Moni_Mexp": Moni.Mexp})
@@ -309,6 +308,9 @@ def main():
         Oexp = pd.DataFrame({"Berth_Oexp": Berth.Oexp, "Navi_Oexp": Navi.Oexp, "Moni_Oexp": Moni.Oexp})
         st.line_chart(Oexp)
         
+        show_linechart_three(Berth.index, Berth.TRL, Navi.TRL, Moni.TRL, "TRL [-]", "TRL of each technology", DIR_FIG, "upper left")
+        show_linechart_three(Berth.index, Berth.integ_factor, Navi.integ_factor, Moni.integ_factor, "Integration Cost Factor [-]", "Integration Cost of Each Technology", DIR_FIG, "lower left")
+                
         """
         Accident of each type of autonomous ship ≒ [accidents/year]
         """
@@ -352,8 +354,8 @@ def main():
                  'Total Subsidy (USD)': int(subsidy_accum['Subsidy_used'].sum()), 
                  'ROI (R&D Expenditure based)': fleet['Profit'].sum()/subsidy_accum['All_investment'].sum(),
                  'ROI (Subsidy based)': fleet['Profit'].sum()/subsidy_accum['Subsidy_used'].sum(),
-                 'Total Accident (cases)': int(fleet[accident_list].sum(axis=1).sum()),
-                 'Total Number of Seafarer (person)': int(fleet[crew_list].sum(axis=1).sum())}
+                 'Average number of Accident (case/year)': int(fleet[accident_list].sum(axis=1).sum()/(end_year-start_year+1)),
+                 'Average number of seafarer (person/year)': int(fleet[crew_list].sum(axis=1).sum()/(end_year-start_year+1))}
         st.write(final)
 
         '''

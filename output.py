@@ -1,7 +1,10 @@
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import streamlit as st
 import altair as alt 
 import matplotlib.animation as animation
+import seaborn as sns
+from adjustText import adjust_text
 
 def show_tradespace_general(a, b, alabel, blabel, title, list, selected_index, directory):
     fig = plt.figure(figsize=(10,10))
@@ -17,6 +20,25 @@ def show_tradespace_general(a, b, alabel, blabel, title, list, selected_index, d
         plt.annotate(label, (a[j], b[j]))
     
     st.pyplot(fig)
+    fig.savefig(directory+'/'+title+'.png')
+
+def show_tradespace_for_multiple(a, b, alabel, blabel, title, list, directory, x_int=False, y_int=False):
+    fig = plt.figure(figsize=(15,15))
+    plt.scatter(x=a, y=b)
+    plt.title(title)
+    plt.xlabel(alabel)
+    plt.ylabel(blabel)
+    if x_int:
+        plt.gca().get_xaxis().set_major_locator(ticker.MaxNLocator(integer=True))
+    if y_int:
+        plt.gca().get_yaxis().set_major_locator(ticker.MaxNLocator(integer=True))
+
+    texts = []
+    for j, label in enumerate(list):
+        text = plt.annotate(label, (a[j], b[j]))
+        texts.append(text)
+        
+    adjust_text(texts, arrowprops=dict(arrowstyle='-', color='gray', lw=0.5))
     fig.savefig(directory+'/'+title+'.png')
 
 def show_tradespace(i, annual_cost, ac_loss, sf_sum, fuel_cost, selected_index):
@@ -58,8 +80,21 @@ def show_tradespace(i, annual_cost, ac_loss, sf_sum, fuel_cost, selected_index):
         
 def show_stackplot(result, label, title, directory):
     fig = plt.figure(figsize=(20,10))
+    cm=plt.get_cmap("tab20")
     ax1 = fig.add_subplot(1, 1, 1)
-    ax1.stackplot(result.index, [result[s] for s in label], labels=label)
+    ax1.stackplot(result.index, [result[s] for s in label], labels=label, colors= [cm(i) for i in range(12)]) #, color=a, cmap=cm) #, color=color_maps)
+    ax1.set_title(title)
+    ax1.legend(loc="upper left")
+    st.pyplot(fig)
+    fig.savefig(directory+'/'+title+'.png')
+
+def show_barchart(result, label, title, directory):
+    fig = plt.figure(figsize=(20,10))
+    cm=plt.get_cmap("tab20")
+    ax1 = fig.add_subplot(1, 1, 1)
+    for i in range(len(label)):
+        ax1.bar(result.index, result[label[i]], bottom=result[label[:i]].sum())
+
     ax1.set_title(title)
     ax1.legend(loc="upper left")
     st.pyplot(fig)
@@ -74,7 +109,30 @@ def show_linechart(x, y, label, title, directory):
     ax1.legend(loc="upper left")
     st.pyplot(fig)
     fig.savefig(directory+'/'+title+'.png')
- 
+
+def show_linechart_two(x, y1, y2, label, title, directory):
+    fig = plt.figure(figsize=(20,10))
+    ax = fig.add_subplot(1, 1, 1)
+    ax.plot(x, y1, label='Profit')
+    ax.plot(x, y2, label='Subsidy')
+    ax.set_ylabel(label)
+    ax.set_title(title)
+    ax.legend(loc="upper left")
+    st.pyplot(fig)
+    fig.savefig(directory+'/'+title+'.png')
+
+def show_linechart_three(x, y1, y2, y3, label, title, directory, legend_pos):
+    fig = plt.figure(figsize=(20,10))
+    ax = fig.add_subplot(1, 1, 1)
+    ax.plot(x, y1, label='Berthing')
+    ax.plot(x, y2, label='Navigation')
+    ax.plot(x, y3, label='Monitoring')
+    ax.set_ylabel(label)
+    ax.set_title(title)
+    ax.legend(loc=legend_pos)
+    st.pyplot(fig)
+    fig.savefig(directory+'/'+title+'.png')
+
 def get_resultsareachart(result_data):
     result_data = result_data.reset_index().melt('year', var_name='type', value_name='y')
     hover = alt.selection_single(
