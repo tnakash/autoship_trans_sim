@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "autoship_trans_sim"
+version = "0.1.0"
+description = "This is the autonomous ship transition simulator made by Utokyo-MIT GTL 2022 internship members."
+authors = ["tky_nksm <nakashima@s.otpe.k.u-tokyo.ac.jp>"]
+license = "MIT"
+
+[tool.pysen]
+version = "0.9"
+
+[tool.pysen.lint]
+enable_black = true
+enable_flake8 = true
+enable_isort = true
+enable_mypy = true
+mypy_preset = "entry"
+line_length = 88
+py_version = "py38"
+[[tool.pysen.lint.mypy_targets]]
+  paths = ["."]
+
+[tool.pysen.lint.source]
+  includes = ["."]
+  excludes = [".venv/"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+matplotlib = "^3.5.2"
+streamlit = "^1.10.0"
+pandas = "^1.4.3"
+adjustText = "^0.7.3"
+PyYAML = "^6.0"
+
+[tool.poetry.dev-dependencies]
+pysen = {version = "^0.10.2", extras = ["lint"]}
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

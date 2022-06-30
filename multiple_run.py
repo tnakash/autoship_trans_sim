@@ -1,14 +1,15 @@
-from Agent import ShipOwner, Investor, PolicyMaker
-from input import get_yml, get_scenario, set_scenario, set_tech
-from output import show_tradespace_for_multiple
-from calculate import calculate_cost, calculate_tech, get_tech_ini, calculate_TRL_cost
+"""""
+Multiple run for making tradespace 
+"""""
+import copy
+import itertools
+import os
 
 import pandas as pd
-import os
-import itertools
-
-import copy
-import math
+from Agent import Investor, PolicyMaker, ShipOwner
+from calculate import calculate_cost, calculate_tech, calculate_TRL_cost, get_tech_ini
+from input import get_scenario, get_yml, set_scenario, set_tech
+from output import show_tradespace_for_multiple
 
 crew_list = ['NaviCrew', 'EngiCrew', 'Cook']
 cost_list = ['OPEX', 'CAPEX', 'VOYEX', 'AddCost']
@@ -21,14 +22,14 @@ accident_list = ['accident_berth', 'accident_navi', 'accident_moni']
 config_list = ['config0', 'config1', 'config2', 'config3', 'config4', 'config5', 'config6', 'config7', 'config8', 'config9', 'config10', 'config11']
 config_list_new = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
 
-def multiple_run():    
+def multiple_run():
     start_year, end_year = 2022, 2050
     numship_init = 1000
     numship_growth = 1.01
-    ship_age = 25 # st.slider('Average Ship Lifeyear',20,30,25)
-    dt_year = 50 # st.slider('Interval for Reset parameters[year]',1,50,50)
+    ship_age = 25
+    dt_year = 50
 
-    economy = 1 # st.sidebar.slider('Profitability weight[-]',0.0,1.0,1.0)
+    economy = 1
     estimated_loss = 34000000
     invest_amount = 5000000
     trial_times = 1
@@ -74,7 +75,6 @@ def multiple_run():
         Manufacturer = Investor()
         Regulator = PolicyMaker()
     
-        # Input from YML file
         cost_yml = get_yml('cost')
         tech_yml = get_yml('tech')
         ship_spec_yml = get_yml('ship_spec')
@@ -188,7 +188,7 @@ def multiple_run():
         list_subsidy[num] = int(subsidy_accum['Subsidy_used'].sum())
         list_ROI[num] = fleet['Profit'].sum()/subsidy_accum['Subsidy_used'].sum()
         list_accident[num] = int(fleet[accident_list].sum(axis=1).sum())
-        list_seafarer[num] = int(fleet[crew_list].sum(axis=1).sum()/(end_year-start_year+1))
+        list_seafarer[num] = int(fleet[crew_list].sum(axis=1).sum() / (end_year-start_year + 1))
     
     DIR = "result/"+'multiple'
     if not os.path.exists(DIR):

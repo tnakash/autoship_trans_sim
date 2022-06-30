@@ -1,8 +1,8 @@
-import pandas as pd
-import yaml
-
 import random
 import sys
+
+import pandas as pd
+import yaml
 
 homedir = ""
 FILE_ERROR_MESSAGE = 'CANNOT FIND THE FILE'

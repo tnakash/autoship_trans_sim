@@ -1,7 +1,0 @@
-ship_age: 25
-ship_demand:
-  annual_growth: 1.01
-  initial_number: 5200
-sim_setting:
-  end_year: 2050
-  start_year: 2022
