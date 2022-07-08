@@ -2,6 +2,7 @@ import copy
 import glob
 import os
 import zipfile
+import sys
 
 import pandas as pd
 import streamlit as st
@@ -29,7 +30,7 @@ accident_list = ['accident_berth', 'accident_navi', 'accident_moni']
 config_list = ['config0', 'config1', 'config2', 'config3', 'config4', 'config5', 'config6', 'config7', 'config8', 'config9', 'config10', 'config11']
 config_list_new = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
 
-def main():
+def main_multiagent():
     '''
     ## Autonomous Ship Transition Simulator
     '''
@@ -52,7 +53,7 @@ def main():
     Oexp_to_safety_loop = st.checkbox('Include effect of Operational experience to Safety', value = True)
     ope_safety_b = st.slider('Accident reduction ratio b (y = ax**(-b))', 0.0, 1.0, 0.2)
     ope_TRL_factor = st.number_input('Operational experience R&D value (USD/times)', value = 10000)
-    animation = st.checkbox('Output animation', value = True)
+    animation = False # st.checkbox('Output animation', value = True)
     
     st.sidebar.markdown('## 2. Agent Parameter Setting')
     
@@ -95,7 +96,15 @@ def main():
     select_index = []
 
     # Set agents
-    Owner = ShipOwner(economy, safety, current_fleet, num_newbuilding, estimated_loss)
+    # Owner = ShipOwner(economy, safety, current_fleet, num_newbuilding, estimated_loss)
+    
+    fleet_1 = current_fleet.copy()
+    fleet_2 = current_fleet.copy()
+    fleet_3 = current_fleet.copy()
+    
+    Owner_1 = ShipOwner(economy, safety, fleet_1, num_newbuilding.copy(), estimated_loss)
+    Owner_2 = ShipOwner(economy, safety, fleet_2, num_newbuilding.copy(), estimated_loss*0.1)
+    Owner_3 = ShipOwner(economy, safety, fleet_3, num_newbuilding.copy(), estimated_loss*10)
     Manufacturer = Investor()
     Regulator = PolicyMaker()
     
@@ -120,7 +129,10 @@ def main():
         else:
             # Read temporary saved parameters
             spec = pd.read_csv('csv/spec'+casename+'.csv', index_col=0)
-            Owner.fleet = pd.read_csv('csv/fleet'+casename+'.csv', index_col=0)
+            # Owner.fleet = pd.read_csv('csv/fleet'+casename+'.csv', index_col=0)
+            Owner_1.fleet = pd.read_csv('csv/fleet1'+casename+'.csv', index_col=0)
+            Owner_2.fleet = pd.read_csv('csv/fleet2'+casename+'.csv', index_col=0)
+            Owner_3.fleet = pd.read_csv('csv/fleet3'+casename+'.csv', index_col=0)
             tech_accum = pd.read_csv('csv/tech'+casename+'.csv', index_col=0)
             tech = tech_accum[-(len(tech_yml)-1):].drop('year', axis=1)
         
@@ -129,7 +141,7 @@ def main():
         
         # Annual iteration           
         for i in range(sim_year-start_year, min(end_year-start_year+1,sim_year-start_year+dt_year), 1):    
-            Manufacturer.reset(invest_tech,invest_amount)
+            Manufacturer.reset(invest_tech, invest_amount)
             Regulator.reset(subsidy_RandD, subsidy_Adoption, subsidy_Experience, trial_times)
 
             # Regulator (Subsidy for Manufacturer) (Increase the investment amount)
@@ -139,21 +151,34 @@ def main():
             tech = Manufacturer.invest(tech, Regulator)
             
             # World (Technology Development)
-            tech = calculate_tech(tech, param, Owner.fleet, ship_age)
+            # tech = calculate_tech(tech, param, Owner.fleet, ship_age)
+            tech = calculate_tech(tech, param, Owner_1.fleet, ship_age)
+            tech = calculate_tech(tech, param, Owner_2.fleet, ship_age)
+            tech = calculate_tech(tech, param, Owner_3.fleet, ship_age)
             tech, acc_navi_semi = calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
             
             # World (Cost Reduction and Safety Improvement)
             spec_current = calculate_cost(ship_spec_yml, cost_yml, start_year+i, tech, acc_navi_semi)
             
             # Ship Owner (Adoption and Purchase)
-            select = Owner.select_ship(spec_current, tech, TRLreg)
-            Owner.purchase_ship(select, i)
-            select_index.append(select) # tentative
-
+            # select = Owner.select_ship(spec_current, tech, TRLreg)
+            # Owner.purchase_ship(select, i)
+            # select_index.append(select) # tentative
+            select_1 = Owner_1.select_ship(spec_current, tech, TRLreg)
+            Owner_1.purchase_ship(select_1, i)
+            select_2 = Owner_2.select_ship(spec_current, tech, TRLreg)
+            Owner_2.purchase_ship(select_2, i)
+            select_3 = Owner_3.select_ship(spec_current, tech, TRLreg)
+            Owner_3.purchase_ship(select_3, i)
+            select_index.append([select_1, select_2, select_3]) # tentative
+    
             # Regulator (Subsidy for Adoption)
             if subsidy_Adoption > 0:
                 Regulator.select_for_sub_adoption(spec_current, tech, TRLreg)
-                Owner.purchase_ship_with_adoption(spec_current, select, tech, i, TRLreg, Regulator)
+                # Owner.purchase_ship_with_adoption(spec_current, select, tech, i, TRLreg, Regulator)
+                Owner_1.purchase_ship_with_adoption(spec_current, select_1, tech, i, TRLreg, Regulator)
+                Owner_2.purchase_ship_with_adoption(spec_current, select_2, tech, i, TRLreg, Regulator)
+                Owner_3.purchase_ship_with_adoption(spec_current, select_3, tech, i, TRLreg, Regulator)
 
             # Regulator (Grand Challenge)
             if subsidy_Experience > 0:
@@ -164,7 +189,7 @@ def main():
                 show_tradespace_general(spec_current.OPEX+spec_current.CAPEX+spec_current.VOYEX+spec_current.AddCost,
                                         spec_current.accident_berth+spec_current.accident_navi+spec_current.accident_moni, 
                                         "Total Cost(USD/year)", "Accident Ratio (-)", "Profitability vs Safety at "+str(start_year+i), 
-                                        spec_current.config.values.tolist(), select, DIR_FIG)
+                                        spec_current.config.values.tolist(), [select_1, select_2, select_3], DIR_FIG)
 
             spec = spec_current if st.session_state['Year'] == start_year and i == 0 else pd.concat([spec, spec_current])
             tech_year = pd.concat([pd.DataFrame({'year': [start_year+i]*3}), tech], axis = 1)            
@@ -179,14 +204,22 @@ def main():
         st.session_state.Year += dt_year
    
         # Visualize results                        
-        building = Owner.fleet[Owner.fleet.year >= start_year]
+        # building = Owner.fleet[Owner.fleet.year >= start_year]
+        building = Owner_1.fleet[Owner_1.fleet.year >= start_year] + Owner_2.fleet[Owner_2.fleet.year >= start_year] + Owner_3.fleet[Owner_3.fleet.year >= start_year]
+        building.year = Owner_1.fleet.year[Owner_1.fleet.year >= start_year]
+        print(building)
         building.set_index("year", inplace=True)
         # st.area_chart(building)
         
-        Owner.fleet.set_index("year", inplace=True)
+        # Owner.fleet.set_index("year", inplace=True)
+        Owner_1.fleet.set_index("year", inplace=True)
+        Owner_2.fleet.set_index("year", inplace=True)
+        Owner_3.fleet.set_index("year", inplace=True)
+
         fleet = copy.copy(building)
         for i in range(start_year, end_year+1):
-            fleet.loc[i,:] = Owner.fleet.loc[i-ship_age:i,:].sum()
+            # fleet.loc[i,:] = Owner.fleet.loc[i-ship_age:i,:].sum()
+            fleet.loc[i,:] = Owner_1.fleet.loc[i-ship_age:i,:].sum() + Owner_2.fleet.loc[i-ship_age:i,:].sum() + Owner_3.fleet.loc[i-ship_age:i,:].sum()
 
         totalcost = copy.copy(building)
         accident = copy.copy(building)
@@ -211,7 +244,10 @@ def main():
         # Save Tentative File for iterative simulation (and final results)
         spec.to_csv(DIR+'/spec_'+casename+'.csv')
         tech_accum.to_csv(DIR+'/tech_'+casename+'.csv')
-        Owner.fleet.to_csv(DIR+'/fleet_'+casename+'.csv')
+        # Owner.fleet.to_csv(DIR+'/fleet_'+casename+'.csv')
+        Owner_1.fleet.to_csv(DIR+'/fleet1_'+casename+'.csv')
+        Owner_2.fleet.to_csv(DIR+'/fleet2_'+casename+'.csv')
+        Owner_3.fleet.to_csv(DIR+'/fleet3_'+casename+'.csv')
         subsidy_accum.to_csv(DIR+'/subsidy_'+casename+'.csv')
         
         """
@@ -340,4 +376,4 @@ def main():
         st.download_button('Download result files (compressed)', open(DIR+'/'+casename+'.zip', 'br'), casename+'.zip')
 
 if __name__ =='__main__':
-    main()
+    main_multiagent()

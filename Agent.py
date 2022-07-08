@@ -14,24 +14,24 @@ class Investor():
         # rewrite afterwards...
         self.invest_used = self.invest_amount
         if (self.invest_tech == 'Berth' or (tech.TRL[1] == 9 and tech.TRL[2] == 9)) and tech.TRL[0] < 9:
-            tech.Rexp[0] += self.invest_amount
+            tech.loc[0, ["Rexp"]] += self.invest_amount
         elif (self.invest_tech == 'Navi' or (tech.TRL[0] == 9 and tech.TRL[2] == 9)) and tech.TRL[1] < 9:
-            tech.Rexp[1] += self.invest_amount
+            tech.loc[1, ["Rexp"]] += self.invest_amount
         elif (self.invest_tech == 'Moni' or (tech.TRL[0] == 9 and tech.TRL[1] == 9)) and tech.TRL[2] < 9:
-            tech.Rexp[2] += self.invest_amount
+            tech.loc[2, ["Rexp"]] += self.invest_amount
         elif tech.TRL[0] < 9 and tech.TRL[1] < 9 and tech.TRL[2] == 9:
-            tech.Rexp[0] += self.invest_amount / 2
-            tech.Rexp[1] += self.invest_amount / 2
+            tech.loc[0, ["Rexp"]] += self.invest_amount / 2
+            tech.loc[1, ["Rexp"]] += self.invest_amount / 2
         elif tech.TRL[0] < 9 and tech.TRL[1] == 9 and tech.TRL[2] < 9:
-            tech.Rexp[0] += self.invest_amount / 2
-            tech.Rexp[2] += self.invest_amount / 2
+            tech.loc[0, ["Rexp"]] += self.invest_amount / 2
+            tech.loc[2, ["Rexp"]] += self.invest_amount / 2
         elif tech.TRL[0] == 9 and tech.TRL[1] < 9 and tech.TRL[2] < 9:
-            tech.Rexp[1] += self.invest_amount / 2
-            tech.Rexp[2] += self.invest_amount / 2            
+            tech.loc[1, ["Rexp"]] += self.invest_amount / 2
+            tech.loc[2, ["Rexp"]] += self.invest_amount / 2            
         elif tech.TRL[0] < 9 and tech.TRL[1] < 9 and tech.TRL[2] < 9:
-            tech.Rexp[0] += self.invest_amount / 3
-            tech.Rexp[1] += self.invest_amount / 3
-            tech.Rexp[2] += self.invest_amount / 3
+            tech.loc[0, ["Rexp"]] += self.invest_amount / 3
+            tech.loc[1, ["Rexp"]] += self.invest_amount / 3
+            tech.loc[2, ["Rexp"]] += self.invest_amount / 3
         else:
             self.invest_used = 0
             # Return Subsidy
@@ -60,7 +60,7 @@ class ShipOwner:
         navi2_list = [3, 6, 9, 11]
         moni_list = [4, 7, 8, 9, 10, 11]
 
-        labour_cost, fuel_cost, capex_sum, opex_sum, voyex_sum, addcost_sum, accident_sum = self.calculate_assumption(spec)
+        labour_cost, fuel_cost, capex_sum, opex_sum, voyex_sum, addcost_sum, accident_sum = calculate_assumption(spec)
         annual_cost = opex_sum + capex_sum + voyex_sum + addcost_sum                
         select_parameter = annual_cost * self.economy + accident_sum * self.safety * self.accident_loss - spec['subsidy']
 
@@ -119,17 +119,17 @@ class ShipOwner:
         self.fleet.at[len(self.fleet.year)-1, 'config'+str(select)] = self.num_newbuiding['ship'][year] - num_subsidized_ship
 
 
-    def calculate_assumption(self, spec):
-        # Can be re-categorized
-        labour_cost = spec.crew_cost + spec.SCC_Personal
-        fuel_cost   = spec.fuel_cost_ME + spec.fuel_cost_AE 
-        capex_sum   = spec.material_cost + spec.integrate_cost + spec.add_eq_cost
-        opex_sum    = spec.crew_cost + spec.store_cost + spec.maintenance_cost + spec.insurance_cost+ spec.general_cost + spec.dock_cost
-        voyex_sum   = spec.port_call + spec.fuel_cost_ME + spec.fuel_cost_AE
-        addcost_sum = spec.SCC_Capex + spec.SCC_Opex + spec.SCC_Personal + spec.Mnt_in_port
-        accident_sum = spec.accident_berth + spec.accident_navi + spec.accident_moni
+def calculate_assumption(spec):
+    # Can be re-categorized
+    labour_cost = spec.crew_cost + spec.SCC_Personal
+    fuel_cost   = spec.fuel_cost_ME + spec.fuel_cost_AE 
+    capex_sum   = spec.material_cost + spec.integrate_cost + spec.add_eq_cost
+    opex_sum    = spec.crew_cost + spec.store_cost + spec.maintenance_cost + spec.insurance_cost+ spec.general_cost + spec.dock_cost
+    voyex_sum   = spec.port_call + spec.fuel_cost_ME + spec.fuel_cost_AE
+    addcost_sum = spec.SCC_Capex + spec.SCC_Opex + spec.SCC_Personal + spec.Mnt_in_port
+    accident_sum = spec.accident_berth + spec.accident_navi + spec.accident_moni
 
-        return labour_cost, fuel_cost, capex_sum, opex_sum, voyex_sum, addcost_sum, accident_sum
+    return labour_cost, fuel_cost, capex_sum, opex_sum, voyex_sum, addcost_sum, accident_sum
 
 
 class PolicyMaker():
@@ -163,6 +163,6 @@ class PolicyMaker():
     def subsidize_experience(self, tech, TRLreg):
         for i in range(3):
             if tech.TRL[i] < TRLreg:
-                tech.Mexp[i] += self.sub_Experience / (tech.tech_cost[i] * self.trial_times)
-                tech.Oexp[i] += self.sub_Experience / (tech.tech_cost[i] * self.trial_times)
+                tech.loc[i, ["Mexp"]] += self.sub_Experience / (tech.tech_cost[i] * self.trial_times)
+                tech.loc[i, ["Oexp"]] += self.sub_Experience / (tech.tech_cost[i] * self.trial_times)
                 self.sub_used += self.sub_Experience

@@ -40,6 +40,37 @@ def show_tradespace_for_multiple(a, b, alabel, blabel, title, list, directory, x
     fig.savefig(directory+'/'+title+'.png')
 
 
+def show_tradespace_for_multiple_color(a, b, alabel, blabel, title, cases, k, color, directory, x_int=False, y_int=False):
+    fig = plt.figure(figsize=(15,15))
+    sub = ('R&D', 'Ado', 'Exp')
+    reg = ('Asis', 'Relax')
+    inv = ('All', 'Berth', 'Navi', 'Moni')
+    ope = ('Safety', 'Profit')
+    prop ={'Subsidy': sub, 'Regulation': reg, 'Investment': inv, 'Operation': ope}
+    cm=plt.get_cmap('tab10')
+
+    for j, option in enumerate(prop[color]):
+        a_0 = [aa for i, aa in enumerate(a) if cases[i][k] == option]
+        b_0 = [bb for i, bb in enumerate(b) if cases[i][k] == option]
+        plt.scatter(x=a_0, y=b_0, c=[cm(j)], label=option)
+        
+    plt.title(title)
+    plt.xlabel(alabel)
+    plt.ylabel(blabel)
+    plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left')
+    if x_int:
+        plt.gca().get_xaxis().set_major_locator(ticker.MaxNLocator(integer=True))
+    if y_int:
+        plt.gca().get_yaxis().set_major_locator(ticker.MaxNLocator(integer=True))
+    
+    texts = []
+    for j, case in enumerate(cases):
+        text = plt.annotate(case[0]+'_'+case[1]+'_'+case[2]+'_'+case[3], (a[j], b[j]))
+        texts.append(text)
+    adjust_text(texts, arrowprops=dict(arrowstyle='-', color='gray', lw=0.5))
+    fig.savefig(directory+'/'+title+'_'+color+'.png')
+
+
 def show_tradespace(i, annual_cost, ac_loss, sf_sum, fuel_cost, selected_index):
     if i % 10 == 0:  # Need to change
         fig = plt.figure(figsize=(18,5))
@@ -50,25 +81,25 @@ def show_tradespace(i, annual_cost, ac_loss, sf_sum, fuel_cost, selected_index):
         ax1.scatter(x=annual_cost[selected_index], y=ac_loss[selected_index],
             # label=f'Selected ({selected_ship[-1]})',
             marker='*', c='yellow', edgecolor='k', s=150)
-        ax1.set_title("Economy vs Safety at " + str(i))
-        ax1.set_xlabel("Annual Cost (USD)")
-        ax1.set_ylabel("Expected Accident (-)")
+        ax1.set_title('Economy vs Safety at ' + str(i))
+        ax1.set_xlabel('Annual Cost (USD)')
+        ax1.set_ylabel('Expected Accident (-)')
 
         ax2.scatter(x=annual_cost, y=sf_sum)
         ax2.scatter(x=annual_cost[selected_index], y=sf_sum[selected_index],
             # label=f'Selected ({selected_ship[-1]})',
             marker='*', c='yellow', edgecolor='k', s=150)
-        ax2.set_title("Economy vs Labour at " + str(i))
-        ax2.set_xlabel("CAPEX (USD)")
-        ax2.set_ylabel("Num of Seafarer (person)")
+        ax2.set_title('Economy vs Labour at ' + str(i))
+        ax2.set_xlabel('CAPEX (USD)')
+        ax2.set_ylabel('Num of Seafarer (person)')
 
         ax3.scatter(x=annual_cost, y=fuel_cost)
         ax3.scatter(x=annual_cost[selected_index], y=fuel_cost[selected_index],
             # label=f'Selected ({selected_ship[-1]})',
             marker='*', c='yellow', edgecolor='k', s=150)
-        ax3.set_title("Economy vs Environment at " + str(i))
-        ax3.set_xlabel("CAPEX (USD)")
-        ax3.set_ylabel("Fuel Cost (USD)")
+        ax3.set_title('Economy vs Environment at ' + str(i))
+        ax3.set_xlabel('CAPEX (USD)')
+        ax3.set_ylabel('Fuel Cost (USD)')
 
         # for j, label in enumerate(spec.index.values):
         #     ax1.text(annual_cost[j], ac_loss[j], label)
@@ -80,24 +111,24 @@ def show_tradespace(i, annual_cost, ac_loss, sf_sum, fuel_cost, selected_index):
 
 def show_stackplot(result, label, title, directory):
     fig = plt.figure(figsize=(20,10))
-    cm=plt.get_cmap("tab20")
+    cm=plt.get_cmap('tab20')
     ax1 = fig.add_subplot(1, 1, 1)
     ax1.stackplot(result.index, [result[s] for s in label], labels=label, colors= [cm(i) for i in range(12)]) #, color=a, cmap=cm) #, color=color_maps)
     ax1.set_title(title)
-    ax1.legend(loc="upper left")
+    ax1.legend(loc='upper left')
     st.pyplot(fig)
     fig.savefig(directory+'/'+title+'.png')
 
 
 def show_barchart(result, label, title, directory):
     fig = plt.figure(figsize=(20,10))
-    cm=plt.get_cmap("tab20")
+    cm=plt.get_cmap('tab20')
     ax1 = fig.add_subplot(1, 1, 1)
     for i in range(len(label)):
         ax1.bar(result.index, result[label[i]], bottom=result[label[:i]].sum())
 
     ax1.set_title(title)
-    ax1.legend(loc="upper left")
+    ax1.legend(loc='upper left')
     st.pyplot(fig)
     fig.savefig(directory+'/'+title+'.png')
 
@@ -108,7 +139,7 @@ def show_linechart(x, y, label, title, directory):
     ax1.plot(x, y)
     ax1.set_ylabel(label)
     ax1.set_title(title)
-    ax1.legend(loc="upper left")
+    ax1.legend(loc='upper left')
     st.pyplot(fig)
     fig.savefig(directory+'/'+title+'.png')
 
@@ -120,7 +151,7 @@ def show_linechart_two(x, y1, y2, label, title, directory):
     ax.plot(x, y2, label='Subsidy')
     ax.set_ylabel(label)
     ax.set_title(title)
-    ax.legend(loc="upper left")
+    ax.legend(loc='upper left')
     st.pyplot(fig)
     fig.savefig(directory+'/'+title+'.png')
 
@@ -141,18 +172,18 @@ def show_linechart_three(x, y1, y2, y3, label, title, directory, legend_pos):
 def get_resultsareachart(result_data):
     result_data = result_data.reset_index().melt('year', var_name='type', value_name='y')
     hover = alt.selection_single(
-        fields=["year"],
+        fields=['year'],
         nearest=True,
-        on="mouseover",
-        empty="none",
+        on='mouseover',
+        empty='none',
     )
     graphbase = (
         alt.Chart(result_data)
         .mark_area()
         .encode(
-            alt.X("year", title=''),
-            alt.Y("y", title=''),
-            color="type",
+            alt.X('year', title=''),
+            alt.Y('y', title=''),
+            color='type',
         )
     )
     # Draw points on the line, and highlight based on selection
@@ -162,12 +193,12 @@ def get_resultsareachart(result_data):
         alt.Chart(result_data)
         .mark_rule()
         .encode(
-            alt.X("year"),
-            alt.Y("y"),
+            alt.X('year'),
+            alt.Y('y'),
             opacity=alt.condition(hover, alt.value(0.3), alt.value(0)),
             tooltip=[
-                alt.Tooltip("year", title="year"),
-                alt.Tooltip("y", title="value"),
+                alt.Tooltip('year', title='year'),
+                alt.Tooltip('y', title='value'),
             ],
         )
         .add_selection(hover)
@@ -180,7 +211,7 @@ def show_tradespace_anime(a, b, alabel, blabel, list, selected_index, directory)
     dRangey = [b.min().min()*0.95, b.max().max()*1.01]
     fig = plt.figure(figsize=(8,8))
     ax = plt.subplot(1,1,1)
-    cmap = plt.get_cmap("tab20")
+    cmap = plt.get_cmap('tab20')
     ims = []
     legends_flag = True
 
@@ -188,7 +219,7 @@ def show_tradespace_anime(a, b, alabel, blabel, list, selected_index, directory)
         image = []
         
         for c, j in enumerate(list):
-            image += ax.plot(a[a.index == i][j], b[b.index == i][j], ".", a[a.index <= i][j], b[b.index <= i][j], "-", markersize=15, linewidth=1, color=cmap(c), label=j) # for c, j in enumerate(list)))
+            image += ax.plot(a[a.index == i][j], b[b.index == i][j], '.', a[a.index <= i][j], b[b.index <= i][j], '-', markersize=15, linewidth=1, color=cmap(c), label=j) # for c, j in enumerate(list)))
         
         image += ax.plot(a[a.index == i]['config'+str(selected_index[i-a.index.min()])], b[a.index == i]['config'+str(selected_index[i-a.index.min()])], '*',
                                        label=f'Selected', markersize =6, color='yellow') #, edgecolor='k', s=150)
@@ -207,4 +238,4 @@ def show_tradespace_anime(a, b, alabel, blabel, list, selected_index, directory)
         ax.set_ylim(dRangey[0],dRangey[1])
 
     ani = animation.ArtistAnimation(fig, ims, interval=300)
-    ani.save(directory+'/tradespace.gif', writer="imagemagick")
+    ani.save(directory+'/tradespace.gif', writer='pillow')

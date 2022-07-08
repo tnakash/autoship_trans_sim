@@ -226,17 +226,17 @@ def calculate_tech(tech, param, ship_fleet, ship_age):
     moni_list = ['config4', 'config7', 'config8', 'config9', 'config10', 'config11']
 
     for i in berth_list:
-        tech.Oexp[0] += ship_working[i].sum()
-        tech.Mexp[0] += ship_working.iloc[-1][i]
+        tech.loc[0, ["Oexp"]] += ship_working[i].sum()
+        tech.loc[0, ["Mexp"]] += ship_working.iloc[-1][i]
     for i in navi1_list:
-        tech.Oexp[1] += ship_working[i].sum() * 0.5
-        tech.Mexp[1] += ship_working.iloc[-1][i] * 0.5
+        tech.loc[1, ["Oexp"]] += ship_working[i].sum() * 0.5
+        tech.loc[1, ["Mexp"]] += ship_working.iloc[-1][i] * 0.5
     for i in navi2_list:
-        tech.Oexp[1] += ship_working[i].sum()
-        tech.Mexp[1] += ship_working.iloc[-1][i]
+        tech.loc[1, ["Oexp"]] += ship_working[i].sum()
+        tech.loc[1, ["Mexp"]] += ship_working.iloc[-1][i]
     for i in moni_list:
-        tech.Oexp[2] += ship_working[i].sum() 
-        tech.Mexp[2] += ship_working.iloc[-1][i]
+        tech.loc[2, ["Oexp"]] += ship_working[i].sum() 
+        tech.loc[2, ["Mexp"]] += ship_working.iloc[-1][i]
     
     return tech
 
@@ -246,25 +246,25 @@ def calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, O
         TRL_need[i] = param.rd_need_TRL
         if Oexp_to_TRL_loop:
             if (tech.Oexp[i] * param.ope_TRL_factor + tech.Rexp[i] * param.rd_TRL_factor) - TRL_need[i] > 0 and tech.TRL[i] < 9:
-                tech.TRL[i] += 1
-                tech.accident_ratio_base[i] = tech.accident_ratio_ini[i] * (1 - param.acc_reduction_full * trl_rate(tech.TRL[i]))
-                tech.Rexp[i] = tech.Rexp[i] - param.rd_need_TRL if tech.Rexp[i] - param.rd_need_TRL > 0 else 0
+                tech.loc[i, ["TRL"]] += 1
+                tech.loc[i, ["accident_ratio_base"]] = tech.accident_ratio_ini[i] * (1 - param.acc_reduction_full * trl_rate(tech.TRL[i]))
+                tech.loc[i, ["Rexp"]] = tech.Rexp[i] - param.rd_need_TRL if tech.Rexp[i] - param.rd_need_TRL > 0 else 0
         else:
             if (tech.Rexp[i] * param.rd_TRL_factor) - TRL_need[i] > 0 and tech.TRL[i] < 9:
-                tech.TRL[i] += 1
-                tech.accident_ratio_base[i] = tech.accident_ratio_ini[i] * (1 - param.acc_reduction_full * trl_rate(tech.TRL[i]))
-                tech.Rexp[i] = tech.Rexp[i] - param.rd_need_TRL if tech.Rexp[i] - param.rd_need_TRL > 0 else 0
+                tech.loc[i, ["TRL"]] += 1
+                tech.loc[i, ["accident_ratio_base"]] = tech.accident_ratio_ini[i] * (1 - param.acc_reduction_full * trl_rate(tech.TRL[i]))
+                tech.loc[i, ["Rexp"]] = tech.Rexp[i] - param.rd_need_TRL if tech.Rexp[i] - param.rd_need_TRL > 0 else 0
 
-        tech.Rexp[i] += param.randd_base
+        tech.loc[i, ["Rexp"]] += param.randd_base
         if Mexp_to_production_loop:
-            tech.integ_factor[i] = tech.integ_factor_ini[i]*(tech.Mexp[i]+1)**(-param.integ_b) # if param.manu_max > tech.Mexp[i] else 1
+            tech.loc[i, ["integ_factor"]] = tech.integ_factor_ini[i]*(tech.Mexp[i]+1)**(-param.integ_b) # if param.manu_max > tech.Mexp[i] else 1
             if tech.integ_factor[i] < 1:
-                tech.integ_factor[i] = 1
+                tech.loc[i, ["integ_factor"]] = 1
         
         if Oexp_to_safety_loop:
-            tech.accident_ratio[i] = tech.accident_ratio_base[i] * (tech.Oexp[i]+1) ** (-param.ope_safety_b)
+            tech.loc[i, ["accident_ratio"]] = tech.accident_ratio_base[i] * (tech.Oexp[i]+1) ** (-param.ope_safety_b)
         else:
-            tech.accident_ratio[i] = tech.accident_ratio_base[i]
+            tech.loc[i, ["accident_ratio"]] = tech.accident_ratio_base[i]
 
     if Oexp_to_safety_loop:
         acc_navi_semi = tech.accident_ratio_ini[1] * (1 - param.acc_reduction_full * trl_rate(tech.TRL[1]+3)) * (tech.Oexp[1]+1) ** (-param.ope_safety_b)
