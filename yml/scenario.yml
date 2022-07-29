@@ -4,8 +4,8 @@ Loop:
   Ope_loop_TRL: true
 Operator:
   economy: 1
-  estimated_loss: 3400000
-  safety: 1
+  estimated_loss: 34000000
+  safety: 0.1
 Regulator:
   TRL_regulation: 7
   subsidy_adoption: 0

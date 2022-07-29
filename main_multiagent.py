@@ -27,8 +27,8 @@ voyex_list = ['port_call', 'fuel_cost_ME', 'fuel_cost_AE']
 addcost_list = ['SCC_Capex', 'SCC_Opex', 'SCC_Personal', 'Mnt_in_port']
 cost_detail_list = opex_list + capex_list + voyex_list + addcost_list 
 accident_list = ['accident_berth', 'accident_navi', 'accident_moni']
-config_list = ['config0', 'config1', 'config2', 'config3', 'config4', 'config5', 'config6', 'config7', 'config8', 'config9', 'config10', 'config11']
-config_list_new = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
+# config_list = ['config0', 'config1', 'config2', 'config3', 'config4', 'config5', 'config6', 'config7', 'config8', 'config9', 'config10', 'config11']
+config_list = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
 
 def main_multiagent():
     '''
@@ -158,27 +158,27 @@ def main_multiagent():
             tech, acc_navi_semi = calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
             
             # World (Cost Reduction and Safety Improvement)
-            spec_current = calculate_cost(ship_spec_yml, cost_yml, start_year+i, tech, acc_navi_semi)
+            spec_current = calculate_cost(ship_spec_yml, cost_yml, start_year+i, tech, acc_navi_semi, config_list)
             
             # Ship Owner (Adoption and Purchase)
             # select = Owner.select_ship(spec_current, tech, TRLreg)
             # Owner.purchase_ship(select, i)
             # select_index.append(select) # tentative
             select_1 = Owner_1.select_ship(spec_current, tech, TRLreg)
-            Owner_1.purchase_ship(select_1, i)
+            Owner_1.purchase_ship(config_list, select_1, i)
             select_2 = Owner_2.select_ship(spec_current, tech, TRLreg)
-            Owner_2.purchase_ship(select_2, i)
+            Owner_2.purchase_ship(config_list, select_2, i)
             select_3 = Owner_3.select_ship(spec_current, tech, TRLreg)
-            Owner_3.purchase_ship(select_3, i)
+            Owner_3.purchase_ship(config_list, select_3, i)
             select_index.append([select_1, select_2, select_3]) # tentative
     
             # Regulator (Subsidy for Adoption)
             if subsidy_Adoption > 0:
                 Regulator.select_for_sub_adoption(spec_current, tech, TRLreg)
                 # Owner.purchase_ship_with_adoption(spec_current, select, tech, i, TRLreg, Regulator)
-                Owner_1.purchase_ship_with_adoption(spec_current, select_1, tech, i, TRLreg, Regulator)
-                Owner_2.purchase_ship_with_adoption(spec_current, select_2, tech, i, TRLreg, Regulator)
-                Owner_3.purchase_ship_with_adoption(spec_current, select_3, tech, i, TRLreg, Regulator)
+                Owner_1.purchase_ship_with_adoption(spec_current, config_list, select_1, tech, i, TRLreg, Regulator)
+                Owner_2.purchase_ship_with_adoption(spec_current, config_list, select_2, tech, i, TRLreg, Regulator)
+                Owner_3.purchase_ship_with_adoption(spec_current, config_list, select_3, tech, i, TRLreg, Regulator)
 
             # Regulator (Grand Challenge)
             if subsidy_Experience > 0:
@@ -239,7 +239,7 @@ def main_multiagent():
         if animation:
             show_tradespace_anime(totalcost, accident, 
                                 "Total Cost(USD/year)", "Accident Ratio (-)", 
-                                config_list, select_index, DIR_FIG)
+                                config_list, select_index, DIR_FIG, config_list)
         
         # Save Tentative File for iterative simulation (and final results)
         spec.to_csv(DIR+'/spec_'+casename+'.csv')
@@ -262,7 +262,7 @@ def main_multiagent():
             for c in cost_list:
                 for s in config_list:
                     fleet.loc[i,c] += fleet.loc[i,s] * spec[(spec['year'] == i) & (spec['config'] == s)][c].mean()
-                    fleet.loc[i,'Profit'] += fleet.loc[i,s] * (spec[(spec['year'] == i) & (spec['config'] == 'config0')][c].mean() - spec[(spec['year'] == i) & (spec['config'] == s)][c].mean())
+                    fleet.loc[i,'Profit'] += fleet.loc[i,s] * (spec[(spec['year'] == i) & (spec['config'] == 'NONE')][c].mean() - spec[(spec['year'] == i) & (spec['config'] == s)][c].mean())
                     
             for c in accident_list:
                 for s in config_list:
@@ -348,15 +348,15 @@ def main_multiagent():
             st.write('Simulation Done!!')
             st.session_state['Year'] = start_year
         
-        if fleet['config11'].sum() > 0:
-            intro_year_full = int(fleet[fleet['config11'] > 0].index[0])
+        if fleet['FULL'].sum() > 0:
+            intro_year_full = int(fleet[fleet['FULL'] > 0].index[0])
         else:
             intro_year_full = 'NaN'
 
         intro_year_auto = end_year
         for i in range(1,11,1):
-            if fleet['config'+str(i)].sum() > 0:
-                intro_year_tmp = int(fleet[fleet['config'+str(i)] > 0].index[0])
+            if fleet[config_list[i]].sum() > 0:
+                intro_year_tmp = int(fleet[fleet[config_list[i]] > 0].index[0])
                 intro_year_auto = intro_year_tmp if intro_year_tmp < intro_year_auto else intro_year_auto 
         
         final = {'Autonomous Ship introduction (year)': intro_year_auto,

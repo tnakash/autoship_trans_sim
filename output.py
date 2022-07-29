@@ -71,6 +71,37 @@ def show_tradespace_for_multiple_color(a, b, alabel, blabel, title, cases, k, co
     fig.savefig(directory+'/'+title+'_'+color+'.png')
 
 
+def show_tradespace_for_multiple_color_notext(a, b, alabel, blabel, title, cases, k, color, directory, x_int=False, y_int=False):
+    fig = plt.figure(figsize=(15,15))
+    sub = ('R&D', 'Ado', 'Exp')
+    reg = ('Asis', 'Relax')
+    inv = ('All', 'Berth', 'Navi', 'Moni')
+    ope = ('Safety', 'Profit')
+    prop ={'Subsidy': sub, 'Regulation': reg, 'Investment': inv, 'Operation': ope}
+    cm=plt.get_cmap('tab10')
+
+    for j, option in enumerate(prop[color]):
+        a_0 = [aa for i, aa in enumerate(a) if cases[i][k] == option]
+        b_0 = [bb for i, bb in enumerate(b) if cases[i][k] == option]
+        plt.scatter(x=a_0, y=b_0, c=[cm(j)], label=option)
+        
+    plt.title(title)
+    plt.xlabel(alabel)
+    plt.ylabel(blabel)
+    plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left')
+    if x_int:
+        plt.gca().get_xaxis().set_major_locator(ticker.MaxNLocator(integer=True))
+    if y_int:
+        plt.gca().get_yaxis().set_major_locator(ticker.MaxNLocator(integer=True))
+    
+    # texts = []
+    # for j, case in enumerate(cases):
+    #     text = plt.annotate(case[0]+'_'+case[1]+'_'+case[2]+'_'+case[3], (a[j], b[j]))
+    #     texts.append(text)
+    # adjust_text(texts, arrowprops=dict(arrowstyle='-', color='gray', lw=0.5))
+    fig.savefig(directory+'/'+title+'_'+color+'.png')
+
+
 def show_tradespace(i, annual_cost, ac_loss, sf_sum, fuel_cost, selected_index):
     if i % 10 == 0:  # Need to change
         fig = plt.figure(figsize=(18,5))
@@ -206,7 +237,7 @@ def get_resultsareachart(result_data):
     return (graphbase+ graphpoints+ graphtooltips).interactive()
 
 
-def show_tradespace_anime(a, b, alabel, blabel, list, selected_index, directory):
+def show_tradespace_anime(a, b, alabel, blabel, list, selected_index, directory, config_list):
     dRangex = [a.min().min()*0.95, a.max().max()*1.01]
     dRangey = [b.min().min()*0.95, b.max().max()*1.01]
     fig = plt.figure(figsize=(8,8))
@@ -221,7 +252,7 @@ def show_tradespace_anime(a, b, alabel, blabel, list, selected_index, directory)
         for c, j in enumerate(list):
             image += ax.plot(a[a.index == i][j], b[b.index == i][j], '.', a[a.index <= i][j], b[b.index <= i][j], '-', markersize=15, linewidth=1, color=cmap(c), label=j) # for c, j in enumerate(list)))
         
-        image += ax.plot(a[a.index == i]['config'+str(selected_index[i-a.index.min()])], b[a.index == i]['config'+str(selected_index[i-a.index.min()])], '*',
+        image += ax.plot(a[a.index == i][config_list[selected_index[i-a.index.min()]]], b[a.index == i][config_list[selected_index[i-a.index.min()]]], '*',
                                        label=f'Selected', markersize =6, color='yellow') #, edgecolor='k', s=150)
         
         ax.set_xlabel(alabel)

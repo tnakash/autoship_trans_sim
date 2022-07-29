@@ -26,8 +26,8 @@ voyex_list = ['port_call', 'fuel_cost_ME', 'fuel_cost_AE']
 addcost_list = ['SCC_Capex', 'SCC_Opex', 'SCC_Personal', 'Mnt_in_port']
 cost_detail_list = opex_list + capex_list + voyex_list + addcost_list 
 accident_list = ['accident_berth', 'accident_navi', 'accident_moni']
-config_list = ['config0', 'config1', 'config2', 'config3', 'config4', 'config5', 'config6', 'config7', 'config8', 'config9', 'config10', 'config11']
-config_list_new = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
+# config_list = ['config0', 'config1', 'config2', 'config3', 'config4', 'config5', 'config6', 'config7', 'config8', 'config9', 'config10', 'config11']
+config_list = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
 
 def main():
     '''
@@ -53,6 +53,7 @@ def main():
     ope_safety_b = st.slider('Accident reduction ratio b (y = ax**(-b))', 0.0, 1.0, 0.2)
     ope_TRL_factor = st.number_input('Operational experience R&D value (USD/times)', value = 10000)
     animation = st.checkbox('Output animation', value = True)
+    uncertainty = st.checkbox('Set Uncertainty', value = True)
     
     st.sidebar.markdown('## 2. Agent Parameter Setting')
     
@@ -91,7 +92,7 @@ def main():
     cost_yml = get_yml('cost')
     tech_yml = get_yml('tech')
     ship_spec_yml = get_yml('ship_spec')
-    tech, param = get_tech_ini(tech_yml)
+    tech, param = get_tech_ini(tech_yml, uncertainty)
     select_index = []
 
     # Set agents
@@ -143,17 +144,17 @@ def main():
             tech, acc_navi_semi = calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
             
             # World (Cost Reduction and Safety Improvement)
-            spec_current = calculate_cost(ship_spec_yml, cost_yml, start_year+i, tech, acc_navi_semi)
+            spec_current = calculate_cost(ship_spec_yml, cost_yml, start_year+i, tech, acc_navi_semi, config_list)
             
             # Ship Owner (Adoption and Purchase)
             select = Owner.select_ship(spec_current, tech, TRLreg)
-            Owner.purchase_ship(select, i)
+            Owner.purchase_ship(config_list, select, i)
             select_index.append(select) # tentative
 
             # Regulator (Subsidy for Adoption)
             if subsidy_Adoption > 0:
                 Regulator.select_for_sub_adoption(spec_current, tech, TRLreg)
-                Owner.purchase_ship_with_adoption(spec_current, select, tech, i, TRLreg, Regulator)
+                Owner.purchase_ship_with_adoption(spec_current, config_list, select, tech, i, TRLreg, Regulator)
 
             # Regulator (Grand Challenge)
             if subsidy_Experience > 0:
@@ -206,7 +207,7 @@ def main():
         if animation:
             show_tradespace_anime(totalcost, accident, 
                                 "Total Cost(USD/year)", "Accident Ratio (-)", 
-                                config_list, select_index, DIR_FIG)
+                                config_list, select_index, DIR_FIG, config_list)
         
         # Save Tentative File for iterative simulation (and final results)
         spec.to_csv(DIR+'/spec_'+casename+'.csv')
@@ -226,7 +227,7 @@ def main():
             for c in cost_list:
                 for s in config_list:
                     fleet.loc[i,c] += fleet.loc[i,s] * spec[(spec['year'] == i) & (spec['config'] == s)][c].mean()
-                    fleet.loc[i,'Profit'] += fleet.loc[i,s] * (spec[(spec['year'] == i) & (spec['config'] == 'config0')][c].mean() - spec[(spec['year'] == i) & (spec['config'] == s)][c].mean())
+                    fleet.loc[i,'Profit'] += fleet.loc[i,s] * (spec[(spec['year'] == i) & (spec['config'] == 'NONE')][c].mean() - spec[(spec['year'] == i) & (spec['config'] == s)][c].mean())
                     
             for c in accident_list:
                 for s in config_list:
@@ -312,15 +313,15 @@ def main():
             st.write('Simulation Done!!')
             st.session_state['Year'] = start_year
         
-        if fleet['config11'].sum() > 0:
-            intro_year_full = int(fleet[fleet['config11'] > 0].index[0])
+        if fleet['FULL'].sum() > 0:
+            intro_year_full = int(fleet[fleet['FULL'] > 0].index[0])
         else:
             intro_year_full = 'NaN'
 
         intro_year_auto = end_year
         for i in range(1,11,1):
-            if fleet['config'+str(i)].sum() > 0:
-                intro_year_tmp = int(fleet[fleet['config'+str(i)] > 0].index[0])
+            if fleet[config_list[i]].sum() > 0:
+                intro_year_tmp = int(fleet[fleet[config_list[i]] > 0].index[0])
                 intro_year_auto = intro_year_tmp if intro_year_tmp < intro_year_auto else intro_year_auto 
         
         final = {'Autonomous Ship introduction (year)': intro_year_auto,
@@ -331,7 +332,8 @@ def main():
                  'ROI (R&D Expenditure based)': fleet['Profit'].sum()/subsidy_accum['All_investment'].sum(),
                  'ROI (Subsidy based)': fleet['Profit'].sum()/subsidy_accum['Subsidy_used'].sum(),
                  'Average number of Accident (case/year)': int(fleet[accident_list].sum(axis=1).sum()/(end_year-start_year+1)),
-                 'Average number of seafarer (person/year)': int(fleet[crew_list].sum(axis=1).sum()/(end_year-start_year+1))}
+                 'Average number of seafarer (person/year)': int(fleet[crew_list].sum(axis=1).sum()/(end_year-start_year+1)),
+                 'Average number of seafarer (person/year)': param.rd_need_TRL}
         st.write(final)
 
         '''

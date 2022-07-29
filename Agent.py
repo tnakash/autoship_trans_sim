@@ -77,12 +77,13 @@ class ShipOwner:
         select = select_parameter.idxmin()
         return select
 
-    def purchase_ship(self, select, year):
+    def purchase_ship(self, config_list, select, year):
         self.fleet.loc[len(self.fleet.year)] = 0
         self.fleet.at[len(self.fleet.year)-1, 'year'] = self.fleet.at[len(self.fleet.year)-2, 'year'] + 1
-        self.fleet.at[len(self.fleet.year)-1, 'config'+str(select)] = self.num_newbuiding['ship'][year]
+        self.fleet.at[len(self.fleet.year)-1, config_list[select]] = self.num_newbuiding['ship'][year]
+        # self.fleet.at[len(self.fleet.year)-1, 'config'+str(select)] = self.num_newbuiding['ship'][year]
 
-    def purchase_ship_with_adoption(self, spec, select, tech, year, TRLreg, PolicyMaker):
+    def purchase_ship_with_adoption(self, spec, config_list, select, tech, year, TRLreg, PolicyMaker):
         # Rewrite afterwards ... 
         berth_list = [1, 5, 6, 7, 10, 11]
         navi1_list = [2, 5, 8, 10]
@@ -90,7 +91,7 @@ class ShipOwner:
         moni_list = [4, 7, 8, 9, 10, 11]
         
         # 同じ計算をあちこちでやっているが，ここはあえて色々な選好パターンを作る目的で．
-        labour_cost, fuel_cost, capex_sum, opex_sum, voyex_sum, addcost_sum, accident_sum = self.calculate_assumption(spec)
+        labour_cost, fuel_cost, capex_sum, opex_sum, voyex_sum, addcost_sum, accident_sum = calculate_assumption(spec)
         annual_cost = opex_sum + capex_sum + voyex_sum + addcost_sum                
         select_parameter = annual_cost * self.economy + accident_sum * self.safety * self.accident_loss - spec['subsidy']
         
@@ -115,8 +116,10 @@ class ShipOwner:
             PolicyMaker.sub_per_ship = 0
             num_subsidized_ship = 0
 
-        self.fleet.at[len(self.fleet.year)-1, 'config'+str(PolicyMaker.sub_select)] = num_subsidized_ship
-        self.fleet.at[len(self.fleet.year)-1, 'config'+str(select)] = self.num_newbuiding['ship'][year] - num_subsidized_ship
+        # self.fleet.at[len(self.fleet.year)-1, 'config'+str(PolicyMaker.sub_select)] = num_subsidized_ship
+        # self.fleet.at[len(self.fleet.year)-1, 'config'+str(select)] = self.num_newbuiding['ship'][year] - num_subsidized_ship
+        self.fleet.at[len(self.fleet.year)-1, config_list[PolicyMaker.sub_select]] = num_subsidized_ship
+        self.fleet.at[len(self.fleet.year)-1, config_list[select]] = self.num_newbuiding['ship'][year] - num_subsidized_ship
 
 
 def calculate_assumption(spec):

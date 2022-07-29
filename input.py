@@ -32,6 +32,8 @@ def get_scenario(scenario):
     ship_age = scenario['ship_age']
     start_year = scenario['sim_setting']['start_year']
     end_year = scenario['sim_setting']['end_year']
+    
+    config_list = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
 
     Year = list(range(start_year, end_year+1))
     sim_years = len(Year)
@@ -45,18 +47,30 @@ def get_scenario(scenario):
         num_newbuilding_ship[i] = NumofShip[i] + Scrap[i] - NumofShip[i-1] if i>0 else int(ship_initial/ship_age)
     
     current_fleet = pd.DataFrame({'year': range(start_year-ship_age, start_year), 
-                                  'config0': [ship_initial//ship_age] * ship_age,
-                                  'config1': [0] * ship_age,
-                                  'config2': [0] * ship_age,
-                                  'config3': [0] * ship_age,
-                                  'config4': [0] * ship_age,
-                                  'config5': [0] * ship_age,
-                                  'config6': [0] * ship_age,
-                                  'config7': [0] * ship_age,
-                                  'config8': [0] * ship_age,
-                                  'config9': [0] * ship_age,
-                                  'config10': [0] * ship_age,
-                                  'config11': [0] * ship_age})
+                                  config_list[0]: [ship_initial//ship_age] * ship_age,
+                                  config_list[1]: [0] * ship_age,
+                                  config_list[2]: [0] * ship_age,
+                                  config_list[3]: [0] * ship_age,
+                                  config_list[4]: [0] * ship_age,
+                                  config_list[5]: [0] * ship_age,
+                                  config_list[6]: [0] * ship_age,
+                                  config_list[7]: [0] * ship_age,
+                                  config_list[8]: [0] * ship_age,
+                                  config_list[9]: [0] * ship_age,
+                                  config_list[10]: [0] * ship_age,
+                                  config_list[11]: [0] * ship_age})
+                                #   'config0': [ship_initial//ship_age] * ship_age,
+                                #   'config1': [0] * ship_age,
+                                #   'config2': [0] * ship_age,
+                                #   'config3': [0] * ship_age,
+                                #   'config4': [0] * ship_age,
+                                #   'config5': [0] * ship_age,
+                                #   'config6': [0] * ship_age,
+                                #   'config7': [0] * ship_age,
+                                #   'config8': [0] * ship_age,
+                                #   'config9': [0] * ship_age,
+                                #   'config10': [0] * ship_age,
+                                #   'config11': [0] * ship_age})
 
     num_newbuilding_year = list(range(start_year, end_year+1))
     num_newbuilding = pd.DataFrame({'year': num_newbuilding_year, 'ship': num_newbuilding_ship})
