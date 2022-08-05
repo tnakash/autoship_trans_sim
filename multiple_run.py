@@ -58,6 +58,9 @@ def multiple_run():
     list_ROI = [0] * len(cases)
     list_accident = [0] * len(cases)
     list_seafarer = [0] * len(cases)
+    list_RDforTRL_b = [0] * len(cases)
+    list_RDforTRL_n = [0] * len(cases)
+    list_RDforTRL_m = [0] * len(cases)
     
     casename = []
     casetype = []
@@ -198,13 +201,15 @@ def multiple_run():
         list_ROI[num] = fleet['Profit'].sum()/subsidy_accum['Subsidy_used'].sum()
         list_accident[num] = int(fleet[accident_list].sum(axis=1).sum())
         list_seafarer[num] = int(fleet[crew_list].sum(axis=1).sum() / (end_year-start_year + 1))
+        list_RDforTRL_b[num] = param.rd_need_TRL[0]
+        list_RDforTRL_n[num] = param.rd_need_TRL[1]
+        list_RDforTRL_m[num] = param.rd_need_TRL[2]        
     
     DIR = 'result/'+'multiple'
     if not os.path.exists(DIR):
         os.makedirs(DIR)
     
     list_intro_full_fillna = [2051 if e == 'nan' or e == 'NaN' else e for e in list_intro_full]
-    
     decisions = ('Subsidy', 'Regulation', 'Investment', 'Operation')
     for ii, decision in enumerate(decisions):
         show_tradespace_for_multiple_color_notext(list_intro_full_fillna, list_profit, 'Introduction of FullAuto ship (year)', 'Profit (USD)', 'Intro(Full) vs Profit', casetype, ii, decision, DIR, True, False)
@@ -225,9 +230,9 @@ def multiple_run():
         'Subsidy ROI (-)': list_ROI,
         'Estimated num of Accident (case/year)': list_accident,
         'Estimated num of Seafarer (person)': list_seafarer,
-        'Necessary R&D for TRL Berth (USD/TRL)': param.rd_need_TRL[0],
-        'Necessary R&D for TRL Navi (USD/TRL)': param.rd_need_TRL[1],
-        'Necessary R&D for TRL Moni (USD/TRL)': param.rd_need_TRL[2]})
+        'Necessary R&D for TRL Berth (USD/TRL)': list_RDforTRL_b,
+        'Necessary R&D for TRL Navi (USD/TRL)': list_RDforTRL_n,
+        'Necessary R&D for TRL Moni (USD/TRL)': list_RDforTRL_m})
 
     result_df.to_csv(DIR+'/'+'multiple'+'.csv')
 
