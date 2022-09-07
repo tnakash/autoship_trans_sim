@@ -333,7 +333,7 @@ def main():
                  'ROI (Subsidy based)': fleet['Profit'].sum()/subsidy_accum['Subsidy_used'].sum(),
                  'Average number of Accident (case/year)': int(fleet[accident_list].sum(axis=1).sum()/(end_year-start_year+1)),
                  'Average number of seafarer (person/year)': int(fleet[crew_list].sum(axis=1).sum()/(end_year-start_year+1)),
-                 'Average number of seafarer (person/year)': param.rd_need_TRL}
+                 'R&D Need TRL': param.rd_need_TRL}
         st.write(final)
 
         '''
