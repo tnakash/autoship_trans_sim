@@ -52,8 +52,9 @@ def main():
     Oexp_to_safety_loop = st.checkbox('Include effect of Operational experience to Safety', value = True)
     ope_safety_b = st.slider('Accident reduction ratio b (y = ax**(-b))', 0.0, 1.0, 0.2)
     ope_TRL_factor = st.number_input('Operational experience R&D value (USD/times)', value = 10000)
-    animation = st.checkbox('Output animation', value = True)
-    uncertainty = st.checkbox('Set Uncertainty', value = True)
+    animation = st.checkbox('Output animation', value = False)
+    uncertainty = st.checkbox('Set Uncertainty', value = False)
+    fuel_rate = st.slider('Fuel rate (times)', 0, 5, 1)
     
     st.sidebar.markdown('## 2. Agent Parameter Setting')
     
@@ -144,7 +145,7 @@ def main():
             tech, acc_navi_semi = calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
             
             # World (Cost Reduction and Safety Improvement)
-            spec_current = calculate_cost(ship_spec_yml, cost_yml, start_year+i, tech, acc_navi_semi, config_list)
+            spec_current = calculate_cost(ship_spec_yml, cost_yml, start_year+i, tech, acc_navi_semi, config_list, fuel_rate)
             
             # Ship Owner (Adoption and Purchase)
             select = Owner.select_ship(spec_current, tech, TRLreg)

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi, config_list):
+def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi, config_list, fuel_rate):
     tech_list = ['Berth', 'Navi', 'Moni']
     crew_list = ['NaviCrew', 'EngiCrew', 'Cook']
     cost_list = ['OPEX', 'CAPEX', 'VOYEX', 'AddCost']
@@ -99,8 +99,8 @@ def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi, config_list):
         add_eq_cost[i] = tech.tech_cost[0] * Berth[i] + tech.tech_cost[1] * Navi[i] * 0.5 + tech.tech_cost[2] * Moni[i]
         
         port_call[i] = cost['VOYEX']['port_call']
-        fuel_cost_ME[i] = cost['VOYEX']['fuel_cost_ME']
-        fuel_cost_AE[i] = cost['VOYEX']['fuel_cost_AE']
+        fuel_cost_ME[i] = cost['VOYEX']['fuel_cost_ME'] * fuel_rate
+        fuel_cost_AE[i] = cost['VOYEX']['fuel_cost_AE'] * fuel_rate
         
         SCC_Capex[i] = 0
         SCC_Opex[i] = 0
@@ -125,7 +125,7 @@ def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi, config_list):
             SCC_Opex[i] += cost['AddCost']['SCC_Opex']*0.5
             SCC_Personal[i] += cost['AddCost']['SCC_Personal']*0.5
             acc_ratio_navi[i] = acc_navi_semi  # Tentativeな例外処理
-            fuel_cost_AE[i] -= cost['VOYEX']['fuel_cost_AE'] * AE_crew_rate * num_crew_navi/num_crew_all * 0.5 * trl_rate(tech.TRL[1]+TRLgap_semi)
+            fuel_cost_AE[i] -= cost['VOYEX']['fuel_cost_AE'] * fuel_rate * AE_crew_rate * num_crew_navi/num_crew_all * 0.5 * trl_rate(tech.TRL[1]+TRLgap_semi)
         elif Navi[i] == 2:
             crew_cost[i] -= cost['OPEX']['crew_cost'] * navi_crew_factor * trl_rate(tech.TRL[1])
             maintenance_cost[i] -= mainte_amount * num_crew_navi/num_crew_all * trl_rate(tech.TRL[1])
@@ -135,8 +135,8 @@ def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi, config_list):
             SCC_Opex[i] += cost['AddCost']['SCC_Opex']
             SCC_Personal[i] += cost['AddCost']['SCC_Personal']
             acc_ratio_navi[i] = tech.accident_ratio[1]
-            fuel_cost_ME[i] -= cost['VOYEX']['fuel_cost_ME'] * ME_no_bridge_rate
-            fuel_cost_AE[i] -= cost['VOYEX']['fuel_cost_AE'] * AE_crew_rate * num_crew_navi/num_crew_all * trl_rate(tech.TRL[1])
+            fuel_cost_ME[i] -= cost['VOYEX']['fuel_cost_ME'] * fuel_rate * ME_no_bridge_rate
+            fuel_cost_AE[i] -= cost['VOYEX']['fuel_cost_AE'] * fuel_rate * AE_crew_rate * num_crew_navi/num_crew_all * trl_rate(tech.TRL[1])
         
         if Moni[i] == 1:
             crew_cost[i] -= cost['OPEX']['crew_cost'] * moni_crew_factor
@@ -148,7 +148,7 @@ def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi, config_list):
             SCC_Opex[i] += cost['AddCost']['SCC_Opex']
             SCC_Personal[i] += cost['AddCost']['SCC_Personal']
             acc_ratio_moni[i] = tech.accident_ratio[2]
-            fuel_cost_AE[i] -= cost['VOYEX']['fuel_cost_AE'] * AE_crew_rate * num_crew_moni/num_crew_all * trl_rate(tech.TRL[2])
+            fuel_cost_AE[i] -= cost['VOYEX']['fuel_cost_AE'] * fuel_rate * AE_crew_rate * num_crew_moni/num_crew_all * trl_rate(tech.TRL[2])
             
         if Navi[i] == 2 and Moni[i] == 1:  # Berthing not considered
             crew_cost[i] -= cost['OPEX']['crew_cost'] * cook_crew_factor
