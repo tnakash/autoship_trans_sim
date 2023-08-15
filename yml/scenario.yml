@@ -7,13 +7,14 @@ Operator:
   estimated_loss: 34000000
   safety: 1
 Regulator:
-  TRL_regulation: 7
+  TRL_regulation: 8
   subsidy_adoption: 0
-  subsidy_randd: 4000000
+  subsidy_randd: 5000000
 ship_age: 25
 ship_demand:
-  annual_growth: 1.01
-  initial_number: 1000
+  annual_growth: 1.0
+  initial_number: 683
+ship_size: 499
 sim_setting:
   end_year: 2050
   start_year: 2022

@@ -25,7 +25,7 @@ def get_yml(filename):
 
 # Set scenario by yaml
 def get_scenario(scenario):
-    column = ['Year', 'NumofShip', 'Newbuilding', 'Scrap']
+    # column = ['Year', 'NumofShip', 'Newbuilding', 'Scrap']
     
     ship_initial = scenario['ship_demand']['initial_number']
     annual_growth = scenario['ship_demand']['annual_growth']
@@ -33,11 +33,9 @@ def get_scenario(scenario):
     start_year = scenario['sim_setting']['start_year']
     end_year = scenario['sim_setting']['end_year']
     
-    config_list = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
-
-    Year = list(range(start_year, end_year+1))
-    sim_years = len(Year)
+    # config_list = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
     
+    sim_years = len(list(range(start_year, end_year+1)))    
     NumofShip = [0] * sim_years
     num_newbuilding_ship = [0] * sim_years
     Scrap = [0] * sim_years
@@ -46,38 +44,37 @@ def get_scenario(scenario):
         Scrap[i]= int(ship_initial/ship_age) if i <= ship_age else num_newbuilding_ship[i-ship_age]
         num_newbuilding_ship[i] = NumofShip[i] + Scrap[i] - NumofShip[i-1] if i>0 else int(ship_initial/ship_age)
     
-    current_fleet = pd.DataFrame({'year': range(start_year-ship_age, start_year), 
-                                  config_list[0]: [ship_initial//ship_age] * ship_age,
-                                  config_list[1]: [0] * ship_age,
-                                  config_list[2]: [0] * ship_age,
-                                  config_list[3]: [0] * ship_age,
-                                  config_list[4]: [0] * ship_age,
-                                  config_list[5]: [0] * ship_age,
-                                  config_list[6]: [0] * ship_age,
-                                  config_list[7]: [0] * ship_age,
-                                  config_list[8]: [0] * ship_age,
-                                  config_list[9]: [0] * ship_age,
-                                  config_list[10]: [0] * ship_age,
-                                  config_list[11]: [0] * ship_age})
-                                #   'config0': [ship_initial//ship_age] * ship_age,
-                                #   'config1': [0] * ship_age,
-                                #   'config2': [0] * ship_age,
-                                #   'config3': [0] * ship_age,
-                                #   'config4': [0] * ship_age,
-                                #   'config5': [0] * ship_age,
-                                #   'config6': [0] * ship_age,
-                                #   'config7': [0] * ship_age,
-                                #   'config8': [0] * ship_age,
-                                #   'config9': [0] * ship_age,
-                                #   'config10': [0] * ship_age,
-                                #   'config11': [0] * ship_age})
+    # current_fleet = pd.DataFrame({'year': range(start_year-ship_age, start_year), 
+    #                               config_list[0]: [ship_initial//ship_age] * ship_age,
+    #                               config_list[1]: [0] * ship_age,
+    #                               config_list[2]: [0] * ship_age,
+    #                               config_list[3]: [0] * ship_age,
+    #                               config_list[4]: [0] * ship_age,
+    #                               config_list[5]: [0] * ship_age,
+    #                               config_list[6]: [0] * ship_age,
+    #                               config_list[7]: [0] * ship_age,
+    #                               config_list[8]: [0] * ship_age,
+    #                               config_list[9]: [0] * ship_age,
+    #                               config_list[10]: [0] * ship_age,
+    #                               config_list[11]: [0] * ship_age})
+
+    ship_size = scenario['ship_size']
+    columns = ['year', 'ship_id', 'year_built', 'DWT', 'berthing', 'navigation', 'monitoring', 'config', 'is_operational', 'misc', 'owner']    
+    current_fleet = pd.DataFrame(columns=columns)
+    ship_id = 0
+    for i in range(ship_age):
+        for j in range(ship_initial//ship_age):
+            ship_id += 1
+            new_row = pd.Series({'year': start_year, 'ship_id': ship_id, 'year_built': start_year-ship_age+i, 'DWT': ship_size, 'berthing': 0, 'navigation': 0, 'monitoring': 0, 'config': 'NONE', 'is_operational': True, 'misc': 'default', 'owner': 'default'})
+            # current_fleet = pd.concat([current_fleet, new_row], ignore_index=True)
+            current_fleet.loc[len(current_fleet)] = new_row
 
     num_newbuilding_year = list(range(start_year, end_year+1))
     num_newbuilding = pd.DataFrame({'year': num_newbuilding_year, 'ship': num_newbuilding_ship})
 
     return current_fleet, num_newbuilding
 
-def set_scenario(start_year, end_year, initial_number, annual_growth, ship_age, economy, safety, estimated_loss, subsidy_randd, subsidy_adoption, TRL_regulation, Manu_loop, Ope_loop_TRL, Ope_loop_Safety):
+def set_scenario(start_year, end_year, initial_number, annual_growth, ship_age, economy, safety, estimated_loss, subsidy_randd, subsidy_adoption, TRL_regulation, Manu_loop, Ope_loop_TRL, Ope_loop_Safety, ship_size):
     # with open(homedir + "yml/scenario/scenario_"+casename+".yml", "w") as yf: # Google Colab用に変更
     with open(homedir + "yml/scenario.yml", "w") as yf: # Google Colab用に変更
         yaml.dump({
@@ -104,7 +101,8 @@ def set_scenario(start_year, end_year, initial_number, annual_growth, ship_age, 
                 "Manu_loop": Manu_loop,
                 "Ope_loop_TRL": Ope_loop_TRL,
                 "Ope_loop_Safety": Ope_loop_Safety
-            }
+            },
+            "ship_size": ship_size,
         }, yf, default_flow_style=False)
 
 def set_tech(ope_safety_b, ope_TRL_factor):

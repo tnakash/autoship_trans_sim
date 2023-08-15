@@ -36,6 +36,9 @@ Others:
     ME_no_bridge_rate: 0.036
     AE_crew_rate: 0.4
     TRLgap_semi: 3
+    num_crew_navi_scc: 1
+    num_crew_moni_scc: 1
+    retrofit_fee: 50000
 
 ManningCost: # not in use
   Captain: 162000

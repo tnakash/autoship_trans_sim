@@ -44,11 +44,17 @@ def multiple_run():
     
     sub = ('R&D', 'Ado', 'Exp')
     reg = ('Asis', 'Relax')
-    inv = ('All', 'Berth', 'Navi', 'Moni')
-    ope = ('Safety', 'Profit')
+    inv = ('All') #, 'Berth', 'Navi', 'Moni')
+    ope = ('Profit') #'Safety', 'Profit')
 
     uncertainty = True
     monte_carlo = 10
+    fuel_rate = 1
+    cost = 'cost_pana'
+    share_rate_O = 1.0
+    share_rate_M = 1.0
+    crew_cost_rate = 1.0
+    insurance_rate = 0.0
     cases = list(itertools.product(sub, reg, inv, ope, range(monte_carlo)))
     
     list_intro_auto = [0] * len(cases)
@@ -83,11 +89,11 @@ def multiple_run():
         scenario_yml = get_yml('scenario')
         current_fleet, num_newbuilding = get_scenario(scenario_yml)
 
-        Owner = ShipOwner(economy, safety, current_fleet, num_newbuilding, estimated_loss)
+        Owner = ShipOwner('Owner', economy, safety, current_fleet, num_newbuilding, estimated_loss)
         Manufacturer = Investor()
         Regulator = PolicyMaker()
     
-        cost_yml = get_yml('cost')
+        cost_yml = get_yml(cost)
         tech_yml = get_yml('tech')
         ship_spec_yml = get_yml('ship_spec')
         tech, param = get_tech_ini(tech_yml, uncertainty)
@@ -101,10 +107,10 @@ def multiple_run():
 
             tech = Manufacturer.invest(tech, Regulator)
 
-            tech = calculate_tech(tech, param, Owner.fleet, ship_age)
+            tech = calculate_tech(tech, param, Owner.fleet, ship_age, share_rate_O, share_rate_M)
             tech, acc_navi_semi = calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
 
-            spec_current = calculate_cost(ship_spec_yml, cost_yml, start_year+i, tech, acc_navi_semi, config_list)
+            spec_current = calculate_cost(ship_spec_yml, cost_yml, start_year+i, tech, acc_navi_semi, config_list, fuel_rate, crew_cost_rate, insurance_rate)
             
             select = Owner.select_ship(spec_current, tech, TRLreg)
             Owner.purchase_ship(config_list, select, i)

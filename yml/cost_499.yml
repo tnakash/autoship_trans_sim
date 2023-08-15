@@ -1,0 +1,57 @@
+OPEX:
+    crew_cost: 517500
+    store_cost: 37000
+    maintenance_cost: 33500
+    insurance_cost: 77000
+    general_cost: 26000
+    dock_cost: 52500
+
+CAPEX: # Assume ship year as 25 yrs
+    material_cost: 333333 # 34000000/25*2/3 [USD]
+    integrate_cost: 166667 # 34000000/25*1/3 [USD]
+
+VOYEX:
+    port_call: 360000
+    fuel_cost_ME: 1840000
+    fuel_cost_AE: 280000
+
+AddCost: # should estimate from the basic?
+    SCC_Capex: 23444 
+    SCC_Opex: 11181
+    SCC_Personal: 132889
+    Mnt_in_port: 155250
+
+Others:
+    navi_crew_factor: 0.39
+    moni_crew_factor: 0.56
+    cook_crew_factor: 0.05
+    mainte_amount: 67000
+    capex_material_ratio: 0.667 # Amend afterwards 
+    accom_reduce_navi: 0.025 # Just to confirm
+    accom_reduce_moni: 0.025
+    num_crew_navi: 4
+    num_crew_moni: 2
+    num_crew_cook: 1
+    berth_pilot_save: 60000 # [USD]
+    ME_no_bridge_rate: 0.036
+    AE_crew_rate: 0.4
+    TRLgap_semi: 3
+    num_crew_navi_scc: 1
+    num_crew_moni_scc: 1
+    retrofit_fee: 30000
+
+# ManningCost: # not in use
+#   Captain: 162000
+#   First_Officer: 108000
+#   Second_Officer: 90000
+#   Third_Officer: 70000
+#   Boatswain: 24800
+#   A_seaman: 24800
+#   O_seaman: 24800
+#   Chief_Eng: 135000
+#   Second_Eng: 63000
+#   Third_Eng: 53000
+#   MinaraiA: 40000
+#   MinaraiB: 40000
+#   Cook: 40919
+#   Messman: 15480

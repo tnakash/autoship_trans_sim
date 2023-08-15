@@ -1,6 +1,7 @@
 import copy
 import glob
 import os
+import random
 import zipfile
 
 import pandas as pd
@@ -14,11 +15,13 @@ from output import (
     show_stackplot,
     show_tradespace_anime,
     show_tradespace_general,
+    show_stacked_bar,
+    make_dataframe_for_output
 )
 from PIL import Image
 
 # Setting lists
-crew_list = ['NaviCrew', 'EngiCrew', 'Cook']
+crew_list = ['NaviCrew', 'EngiCrew', 'Cook', 'NaviCrewSCC', 'EngiCrewSCC']
 cost_list = ['OPEX', 'CAPEX', 'VOYEX', 'AddCost']
 opex_list = ['crew_cost', 'store_cost', 'maintenance_cost', 'insurance_cost', 'general_cost', 'dock_cost']
 capex_list = ['material_cost', 'integrate_cost', 'add_eq_cost']
@@ -26,8 +29,8 @@ voyex_list = ['port_call', 'fuel_cost_ME', 'fuel_cost_AE']
 addcost_list = ['SCC_Capex', 'SCC_Opex', 'SCC_Personal', 'Mnt_in_port']
 cost_detail_list = opex_list + capex_list + voyex_list + addcost_list 
 accident_list = ['accident_berth', 'accident_navi', 'accident_moni']
-# config_list = ['config0', 'config1', 'config2', 'config3', 'config4', 'config5', 'config6', 'config7', 'config8', 'config9', 'config10', 'config11']
 config_list = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
+tech_list = ['berthing', 'navigation', 'monitoring']
 
 def main():
     '''
@@ -39,10 +42,10 @@ def main():
     st.markdown('#### 1. Scenario Setting')
     
     st.write('1.1 Basic Setting')
-    casename = st.text_input("Casename", value="test_0503")
+    casename = st.text_input('Casename', value='test_0503')
     start_year, end_year = st.slider('Simulation Year', 2020, 2070, (2022, 2050))
-    numship_init = st.slider('Initial Number of ships[ship]', 1, 10000, 1000)
-    numship_growth = st.slider('Annual growth rate of ship demand[-]', 0.90, 1.10, 1.01)
+    numship_init = st.slider('Initial Number of ships[ship]', 1, 10000, 3000)
+    numship_growth = st.slider('Annual growth rate of ship demand[-]', 0.90, 1.10, 1.00)
     ship_age = 25  # st.slider('Average Ship Lifeyear', 20, 30, 25)
     dt_year = 50  # st.slider('Interval for Reset parameters[year]', 1, 50, 50)
 
@@ -56,12 +59,23 @@ def main():
     uncertainty = st.checkbox('Set Uncertainty', value = False)
     fuel_rate = st.slider('Fuel rate (times)', 0, 5, 1)
     
+    ship_size = st.selectbox('Ship size (DWT)', (499, 80000))
+    cost = 'cost_' + str(ship_size)
+    
+    share_rate_O = st.slider('Sharing ratio of operational experience', 0.0, 1.0, 1.0)
+    share_rate_M = st.slider('Sharing ratio of Manufacturing experience', 0.0, 1.0, 1.0)
+    crew_cost_rate = st.slider('Crew Cost rate', 1.0, 2.0, 1.0)
+    insurance_rate = st.slider('Insurance Cost Discount rate', 0.0, 1.0, 0.0)
+    retrofit = st.checkbox('Consider retrofit?', value = False)
+    retrofit_cost = st.number_input('Retrofit Cost [USD]', value = 30000)
+    retrofit_limit = st.number_input('Retrofit limit per year [ship/year]', value = 100)
+    
     st.sidebar.markdown('## 2. Agent Parameter Setting')
     
     st.sidebar.markdown('### 2.1 Ship Owner')
     st.sidebar.write("Parameters for ship adoption")
     economy = 1  # st.sidebar.slider('Profitability weight[-]', 0.0, 1.0, 1.0)
-    safety = st.sidebar.slider('Safety weight Compared to Profitability', 1, 10, 1)
+    safety = st.sidebar.slider('Safety weight Compared to Profitability', 0, 10, 1)
     estimated_loss = st.sidebar.number_input('Estimated Accident Loss Amount [USD/year]', value = 34000000) 
     
     st.sidebar.markdown('### 2.2 Manufacturer (R&D Investor))')
@@ -84,20 +98,21 @@ def main():
     set_scenario(
         start_year, end_year, numship_init, numship_growth, ship_age, 
         economy, safety, estimated_loss, subsidy_RandD, subsidy_Adoption, TRLreg, 
-        Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
+        Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop,
+        ship_size)
     scenario_yml = get_yml('scenario')
     current_fleet, num_newbuilding = get_scenario(scenario_yml)
 
     # Set parameters (cost, tech and ship spec)
     set_tech(ope_safety_b, ope_TRL_factor)
-    cost_yml = get_yml('cost')
+    cost_yml = get_yml(cost)
     tech_yml = get_yml('tech')
     ship_spec_yml = get_yml('ship_spec')
     tech, param = get_tech_ini(tech_yml, uncertainty)
     select_index = []
 
     # Set agents
-    Owner = ShipOwner(economy, safety, current_fleet, num_newbuilding, estimated_loss)
+    Owner = ShipOwner('Owner', economy, safety, current_fleet, num_newbuilding, estimated_loss)
     Manufacturer = Investor()
     Regulator = PolicyMaker()
     
@@ -109,6 +124,10 @@ def main():
     DIR_FIG = "result/"+casename+'/fig'
     if not os.path.exists(DIR_FIG):
         os.makedirs(DIR_FIG)
+    
+    # Set dataframe for output
+    fleet = make_dataframe_for_output(start_year, end_year, config_list)
+    building = copy.copy(fleet)
     
     # Start Simulation
     if 'Year' not in st.session_state:
@@ -141,25 +160,36 @@ def main():
             tech = Manufacturer.invest(tech, Regulator)
             
             # World (Technology Development)
-            tech = calculate_tech(tech, param, Owner.fleet, ship_age)
+            tech = calculate_tech(tech, param, Owner.fleet, ship_age, share_rate_O, share_rate_M, start_year+i-1)
             tech, acc_navi_semi = calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
             
             # World (Cost Reduction and Safety Improvement)
-            spec_current = calculate_cost(ship_spec_yml, cost_yml, start_year+i, tech, acc_navi_semi, config_list, fuel_rate)
+            spec_current = calculate_cost(ship_spec_yml, cost_yml, start_year+i, tech, acc_navi_semi, config_list, fuel_rate, crew_cost_rate, insurance_rate)
             
             # Ship Owner (Adoption and Purchase)
             select = Owner.select_ship(spec_current, tech, TRLreg)
-            Owner.purchase_ship(config_list, select, i)
+            Owner.purchase_ship(config_list, select, i, start_year)
             select_index.append(select) # tentative
 
             # Regulator (Subsidy for Adoption)
             if subsidy_Adoption > 0:
                 Regulator.select_for_sub_adoption(spec_current, tech, TRLreg)
-                Owner.purchase_ship_with_adoption(spec_current, config_list, select, tech, i, TRLreg, Regulator)
+                Owner.purchase_ship_with_adoption(spec_current, config_list, select, tech, i, TRLreg, Regulator, start_year)
+
+            # Ship Owner (Retrofit)
+            if retrofit:
+                Owner.select_retrofit_ship(spec_current, tech, TRLreg, ship_age, retrofit_cost, config_list, i, start_year, retrofit_limit)
 
             # Regulator (Grand Challenge)
             if subsidy_Experience > 0:
                 Regulator.subsidize_experience(tech, TRLreg)
+
+            # Ship Owner (Scrap)
+            Owner.scrap_ship(ship_age, i, start_year)
+            
+            for config in config_list:
+                fleet.at[start_year+i, config] = ((Owner.fleet['is_operational'] == True) & (Owner.fleet['config'] == config)).sum()
+                building.at[start_year+i, config] = ((Owner.fleet['year_built'] == start_year+i) & (Owner.fleet['config'] == config) & ((Owner.fleet['misc'] == 'newbuilt') | (Owner.fleet['misc'] == 'newbuilt_subsidized'))).sum()
 
             # Show Tradespace
             if (start_year+i)%10 == 0:
@@ -179,16 +209,6 @@ def main():
 
         # proceed year
         st.session_state.Year += dt_year
-   
-        # Visualize results                        
-        building = Owner.fleet[Owner.fleet.year >= start_year]
-        building.set_index("year", inplace=True)
-        # st.area_chart(building)
-        
-        Owner.fleet.set_index("year", inplace=True)
-        fleet = copy.copy(building)
-        for i in range(start_year, end_year+1):
-            fleet.loc[i,:] = Owner.fleet.loc[i-ship_age:i,:].sum()
 
         totalcost = copy.copy(building)
         accident = copy.copy(building)
@@ -220,6 +240,7 @@ def main():
         Fleet Breakdown [ship]
         """
         show_stackplot(fleet, config_list, "Number of ships for each autonomous level", DIR_FIG)
+        # show_stacked_bar(fleet, config_list, "Number of ships for each autonomous level", DIR_FIG)
         
         for c in cost_list+accident_list+crew_list+['Profit'] + cost_detail_list:
             fleet[c] = 0
@@ -248,21 +269,25 @@ def main():
         """
         # num_ship = fleet[config_list].sum(axis=1)
         show_stackplot(fleet, fleet[cost_list], "Cost of Each Vessel [USD]", DIR_FIG)
+        # show_stacked_bar(fleet, fleet[cost_list], "Cost of Each Vessel [USD]", DIR_FIG)
         
         """
         Cost of Each Vessel (detailed) [USD]
         """
         show_stackplot(fleet, fleet[cost_detail_list], "Cost of Each Vessel (detailed) [USD]", DIR_FIG)
-        
+        #show_stacked_bar(fleet, fleet[cost_detail_list], "Cost of Each Vessel (detailed) [USD]", DIR_FIG)        
+
         """
         Number of Expected Accidents [num of accidents]
         """
         show_stackplot(fleet, fleet[accident_list], "Number of Expected Accidents [num of accidents]", DIR_FIG)
+        #show_stacked_bar(fleet, fleet[accident_list], "Number of Expected Accidents [num of accidents]", DIR_FIG)
         
         """
         Number of Seafarers [people]
         """
         show_stackplot(fleet, fleet[crew_list], "Number of Seafarers [people]", DIR_FIG)        
+        #show_stacked_bar(fleet, fleet[crew_list], "Number of Seafarers [people]", DIR_FIG)        
         
         """
         Profit of the Industry (Difference from 'existing vessel' fleet) [USD] and Subsidy used [USD]
@@ -307,7 +332,7 @@ def main():
                 z.write(file)
             z.write('yml/tech.yml')
             z.write('yml/scenario.yml')
-            z.write('yml/cost.yml')
+            z.write('yml/'+cost+'.yml')
             z.write('yml/ship_spec.yml')
 
         if st.session_state.Year >= end_year:
@@ -327,6 +352,8 @@ def main():
         
         final = {'Autonomous Ship introduction (year)': intro_year_auto,
                  'Full Autonomous Ship introduction (year)': intro_year_full,
+                #  'Autonomous Ship introduction ratio at 2040 (-)': autoratio_2040,
+                #  'Full Autonomous Ship introduction ratio at 2040 (-)': fullratio_2040,
                  'Total Profit (USD)': int(fleet['Profit'].sum()), 
                  'Total Investment for R&D (incl. Subsidy) (USD)': int(subsidy_accum['All_investment'].sum()),
                  'Total Subsidy (USD)': int(subsidy_accum['Subsidy_used'].sum()), 

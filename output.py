@@ -3,6 +3,7 @@ import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import streamlit as st
+import pandas as pd
 from adjustText import adjust_text
 
 
@@ -140,6 +141,25 @@ def show_tradespace(i, annual_cost, ac_loss, sf_sum, fuel_cost, selected_index):
         st.pyplot(fig)
 
 
+def make_dataframe_for_output(start_year, end_year, config_list):
+    df = pd.DataFrame({'year': range(start_year, end_year),
+                        config_list[0]: [0] * (end_year - start_year),
+                        config_list[1]: [0] * (end_year - start_year),
+                        config_list[2]: [0] * (end_year - start_year),
+                        config_list[3]: [0] * (end_year - start_year),
+                        config_list[4]: [0] * (end_year - start_year),
+                        config_list[5]: [0] * (end_year - start_year),
+                        config_list[6]: [0] * (end_year - start_year),
+                        config_list[7]: [0] * (end_year - start_year),
+                        config_list[8]: [0] * (end_year - start_year),
+                        config_list[9]: [0] * (end_year - start_year),
+                        config_list[10]: [0] * (end_year - start_year),
+                        config_list[11]: [0] * (end_year - start_year)})
+    df_new = df.set_index('year')
+    
+    return df_new
+
+
 def show_stackplot(result, label, title, directory):
     fig = plt.figure(figsize=(20,10))
     cm=plt.get_cmap('tab20')
@@ -150,6 +170,27 @@ def show_stackplot(result, label, title, directory):
     st.pyplot(fig)
     fig.savefig(directory+'/'+title+'.png')
 
+
+def show_stacked_bar(result, label, title, directory):
+    fig = plt.figure(figsize=(20, 10))
+    cm = plt.get_cmap('tab20')
+    ax1 = fig.add_subplot(1, 1, 1)
+
+    # 各データセットを積み上げ棒グラフとして描画
+    bottom = None
+    for i, s in enumerate(label):
+        ax1.bar(result.index, result[s], label=s, bottom=bottom, color=cm(i))
+        if bottom is None:
+            bottom = result[s]
+        else:
+            bottom += result[s]
+
+    ax1.set_title(title)
+    ax1.legend(loc='upper left')
+    plt.xticks(result.index, rotation=45)
+    plt.tight_layout()
+    st.pyplot(fig)
+    fig.savefig(directory + '/' + title + '.png')
 
 def show_barchart(result, label, title, directory):
     fig = plt.figure(figsize=(20,10))
