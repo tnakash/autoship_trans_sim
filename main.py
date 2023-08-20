@@ -30,7 +30,7 @@ addcost_list = ['SCC_Capex', 'SCC_Opex', 'SCC_Personal', 'Mnt_in_port']
 cost_detail_list = opex_list + capex_list + voyex_list + addcost_list 
 accident_list = ['accident_berth', 'accident_navi', 'accident_moni']
 config_list = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
-tech_list = ['berthing', 'navigation', 'monitoring']
+# tech_list = ['berthing', 'navigation', 'monitoring']
 
 def main():
     '''
@@ -209,7 +209,7 @@ def main():
 
         # proceed year
         st.session_state.Year += dt_year
-
+        
         totalcost = copy.copy(building)
         accident = copy.copy(building)
         

@@ -5,15 +5,15 @@ Loop:
 Operator:
   economy: 1
   estimated_loss: 34000000
-  safety: 1
+  safety: 0.1
 Regulator:
-  TRL_regulation: 8
+  TRL_regulation: 7
   subsidy_adoption: 0
   subsidy_randd: 5000000
 ship_age: 25
 ship_demand:
   annual_growth: 1.0
-  initial_number: 683
+  initial_number: 3441
 ship_size: 499
 sim_setting:
   end_year: 2050

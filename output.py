@@ -45,11 +45,17 @@ def show_tradespace_for_multiple_color(a, b, alabel, blabel, title, cases, k, co
     fig = plt.figure(figsize=(15,15))
     sub = ('R&D', 'Ado', 'Exp')
     reg = ('Asis', 'Relax')
-    inv = ('All', 'Berth', 'Navi', 'Moni')
-    ope = ('Safety', 'Profit')
-    prop ={'Subsidy': sub, 'Regulation': reg, 'Investment': inv, 'Operation': ope}
-    cm=plt.get_cmap('tab10')
+    # inv = ('All', 'Berth', 'Navi', 'Moni')
+    # ope = ('Safety', 'Profit')
+    # prop ={'Subsidy': sub, 'Regulation': reg, 'Investment': inv, 'Operation': ope}
+    
+    share = ('Close', 'Open') #0.1, 1.0)
+    insurance = ('Asis', 'Considered') #(0.0, 1.0)    
 
+    # prop ={'Subsidy': sub, 'Regulation': reg, 'Investment': inv, 'Operation': ope}    
+    prop ={'Subsidy': sub, 'Regulation': reg, 'Openness': share, 'Insurance': insurance}
+    cm=plt.get_cmap('tab10')
+    
     for j, option in enumerate(prop[color]):
         a_0 = [aa for i, aa in enumerate(a) if cases[i][k] == option]
         b_0 = [bb for i, bb in enumerate(b) if cases[i][k] == option]
@@ -68,17 +74,21 @@ def show_tradespace_for_multiple_color(a, b, alabel, blabel, title, cases, k, co
     for j, case in enumerate(cases):
         text = plt.annotate(case[0]+'_'+case[1]+'_'+case[2]+'_'+case[3], (a[j], b[j]))
         texts.append(text)
-    adjust_text(texts, arrowprops=dict(arrowstyle='-', color='gray', lw=0.5))
+    # adjust_text(texts, arrowprops=dict(arrowstyle='-', color='gray', lw=0.5))
     fig.savefig(directory+'/'+title+'_'+color+'.png')
-
+    plt.close()
 
 def show_tradespace_for_multiple_color_notext(a, b, alabel, blabel, title, cases, k, color, directory, x_int=False, y_int=False):
     fig = plt.figure(figsize=(15,15))
     sub = ('R&D', 'Ado', 'Exp')
     reg = ('Asis', 'Relax')
-    inv = ('All', 'Berth', 'Navi', 'Moni')
-    ope = ('Safety', 'Profit')
-    prop ={'Subsidy': sub, 'Regulation': reg, 'Investment': inv, 'Operation': ope}
+    # inv = ('All', 'Berth', 'Navi', 'Moni')
+    # ope = ('Safety', 'Profit')
+    share = ('Close', 'Open') #0.1, 1.0)
+    insurance = ('Asis', 'Considered') #(0.0, 1.0)    
+
+    # prop ={'Subsidy': sub, 'Regulation': reg, 'Investment': inv, 'Operation': ope}    
+    prop ={'Subsidy': sub, 'Regulation': reg, 'Openness': share, 'Insurance': insurance}
     cm=plt.get_cmap('tab10')
 
     for j, option in enumerate(prop[color]):
@@ -101,6 +111,7 @@ def show_tradespace_for_multiple_color_notext(a, b, alabel, blabel, title, cases
     #     texts.append(text)
     # adjust_text(texts, arrowprops=dict(arrowstyle='-', color='gray', lw=0.5))
     fig.savefig(directory+'/'+title+'_'+color+'.png')
+    plt.close()
 
 
 def show_tradespace(i, annual_cost, ac_loss, sf_sum, fuel_cost, selected_index):

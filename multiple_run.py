@@ -9,7 +9,7 @@ import pandas as pd
 from Agent import Investor, PolicyMaker, ShipOwner
 from calculate import calculate_cost, calculate_tech, calculate_TRL_cost, get_tech_ini
 from input import get_scenario, get_yml, set_scenario, set_tech
-from output import show_tradespace_for_multiple, show_tradespace_for_multiple_color_notext
+from output import show_tradespace_for_multiple_color, show_tradespace_for_multiple_color_notext, make_dataframe_for_output
 
 crew_list = ['NaviCrew', 'EngiCrew', 'Cook']
 cost_list = ['OPEX', 'CAPEX', 'VOYEX', 'AddCost']
@@ -21,11 +21,15 @@ cost_detail_list = opex_list + capex_list + voyex_list + addcost_list
 accident_list = ['accident_berth', 'accident_navi', 'accident_moni']
 # config_list = ['config0', 'config1', 'config2', 'config3', 'config4', 'config5', 'config6', 'config7', 'config8', 'config9', 'config10', 'config11']
 config_list = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
+# tech_list = ['berthing', 'navigation', 'monitoring']
 
 def multiple_run():
+    '''
+    Settings
+    '''    
     start_year, end_year = 2022, 2050
-    numship_init = 1000
-    numship_growth = 1.01
+    numship_init = 3441
+    numship_growth = 1.00
     ship_age = 25
     dt_year = 50
 
@@ -41,22 +45,35 @@ def multiple_run():
     ope_safety_b = 0.2
     ope_TRL_factor = 10000
     set_tech(ope_safety_b, ope_TRL_factor)
-    
+
+    '''
+    Control Parameters
+    '''    
     sub = ('R&D', 'Ado', 'Exp')
     reg = ('Asis', 'Relax')
-    inv = ('All') #, 'Berth', 'Navi', 'Moni')
-    ope = ('Profit') #'Safety', 'Profit')
+    inv = 'All' #, 'Berth', 'Navi', 'Moni')
+    ope = 'Profit' #'Safety', 'Profit')
 
-    uncertainty = True
-    monte_carlo = 10
+    share = ('Close', 'Open') #0.1, 1.0)
+    insurance = ('Asis', 'Considered') #(0.0, 1.0)
+
+    uncertainty = False # True
+    monte_carlo = 1
     fuel_rate = 1
-    cost = 'cost_pana'
-    share_rate_O = 1.0
+    
+    ship_size = 499
+    cost = 'cost_' + str(ship_size)
+
     share_rate_M = 1.0
     crew_cost_rate = 1.0
-    insurance_rate = 0.0
-    cases = list(itertools.product(sub, reg, inv, ope, range(monte_carlo)))
-    
+
+    retrofit = True
+    retrofit_cost = 30000
+    retrofit_limit = 300
+
+    cases = list(itertools.product(sub, reg, share, insurance, range(monte_carlo)))    
+    # cases = list(itertools.product(sub, reg, inv, ope, range(monte_carlo)))
+        
     list_intro_auto = [0] * len(cases)
     list_intro_full = [0] * len(cases)
     list_profit = [0] * len(cases)
@@ -78,14 +95,16 @@ def multiple_run():
         print(case)
         casename.append(case[0]+'_'+case[1]+'_'+case[2]+'_'+case[3]+'_'+str(case[4]))
         casetype.append([case[0], case[1], case[2], case[3], case[4]])
-        safety = 1 if case[3] == 'Safety' else 0.1
-        invest_tech = case[2]
+        safety = 0.1 # 1 if case[3] == 'Safety' else 0.1
+        invest_tech = 'All' # case[2]
+        share_rate_O = 0.01 if case[2] == 'Close' else 1.0
+        insurance_rate = 0.0 if case[3] == 'Asis' else 1.0
         subsidy_RandD = 5000000
         subsidy_Adoption = 1000000 if case[0] == 'Ado' else 0
         subsidy_Experience = 1000000 if case[0] == 'Exp' else 0
         TRLreg = 8 if case[1] == 'Asis' else 7
         
-        set_scenario(start_year, end_year, numship_init, numship_growth, ship_age, economy, safety, estimated_loss, subsidy_RandD, subsidy_Adoption, TRLreg, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
+        set_scenario(start_year, end_year, numship_init, numship_growth, ship_age, economy, safety, estimated_loss, subsidy_RandD, subsidy_Adoption, TRLreg, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop, ship_size)
         scenario_yml = get_yml('scenario')
         current_fleet, num_newbuilding = get_scenario(scenario_yml)
 
@@ -99,6 +118,9 @@ def multiple_run():
         tech, param = get_tech_ini(tech_yml, uncertainty)
         select_index = []
         
+        fleet = make_dataframe_for_output(start_year, end_year, config_list)
+        building = copy.copy(fleet)
+        
         sim_year=start_year
         for i in range(sim_year-start_year, min(end_year-start_year+1,sim_year-start_year+dt_year), 1):    
             Manufacturer.reset(invest_tech,invest_amount)
@@ -107,21 +129,32 @@ def multiple_run():
 
             tech = Manufacturer.invest(tech, Regulator)
 
-            tech = calculate_tech(tech, param, Owner.fleet, ship_age, share_rate_O, share_rate_M)
+            tech = calculate_tech(tech, param, Owner.fleet, ship_age, share_rate_O, share_rate_M, start_year+i-1)
             tech, acc_navi_semi = calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
 
             spec_current = calculate_cost(ship_spec_yml, cost_yml, start_year+i, tech, acc_navi_semi, config_list, fuel_rate, crew_cost_rate, insurance_rate)
             
             select = Owner.select_ship(spec_current, tech, TRLreg)
-            Owner.purchase_ship(config_list, select, i)
+            Owner.purchase_ship(config_list, select, i, start_year)
             select_index.append(select) # tentative
 
             if subsidy_Adoption > 0:
                 Regulator.select_for_sub_adoption(spec_current, tech, TRLreg)
-                Owner.purchase_ship_with_adoption(spec_current, config_list, select, tech, i, TRLreg, Regulator)
+                Owner.purchase_ship_with_adoption(spec_current, config_list, select, tech, i, TRLreg, Regulator, start_year)
+
+            if retrofit:
+                Owner.select_retrofit_ship(spec_current, tech, TRLreg, ship_age, retrofit_cost, config_list, i, start_year, retrofit_limit)
 
             if subsidy_Experience > 0:
                 Regulator.subsidize_experience(tech, TRLreg)
+
+            # Ship Owner (Scrap)
+            Owner.scrap_ship(ship_age, i, start_year)
+
+            for config in config_list:
+                fleet.at[start_year+i, config] = ((Owner.fleet['is_operational'] == True) & (Owner.fleet['config'] == config)).sum()
+                building.at[start_year+i, config] = ((Owner.fleet['year_built'] == start_year+i) & (Owner.fleet['config'] == config) & ((Owner.fleet['misc'] == 'newbuilt') | (Owner.fleet['misc'] == 'newbuilt_subsidized'))).sum()
+
             
             spec = spec_current if i == 0 else pd.concat([spec, spec_current])
             tech_year = pd.concat([pd.DataFrame({'year': [start_year+i]*3}), tech], axis = 1)            
@@ -132,13 +165,13 @@ def multiple_run():
                         'Subsidy_per_ship': Regulator.sub_per_ship, 'All_investment': Manufacturer.invest_used}, index=[i+start_year])
             subsidy_accum = subsidy_df if i == 0 else pd.concat([subsidy_accum, subsidy_df])
 
-        building = Owner.fleet[Owner.fleet.year >= start_year]
+        # building = Owner.fleet[Owner.fleet.year >= start_year]
 
-        building.set_index('year', inplace=True)            
-        Owner.fleet.set_index('year', inplace=True)
-        fleet = copy.copy(building)
-        for i in range(start_year, end_year+1):
-            fleet.loc[i,:] = Owner.fleet.loc[i-ship_age:i,:].sum()
+        # building.set_index('year', inplace=True)            
+        # Owner.fleet.set_index('year', inplace=True)
+        # fleet = copy.copy(building)
+        # for i in range(start_year, end_year+1):
+        #     fleet.loc[i,:] = Owner.fleet.loc[i-ship_age:i,:].sum()
 
         totalcost = copy.copy(building)
         accident = copy.copy(building)
@@ -216,16 +249,17 @@ def multiple_run():
         os.makedirs(DIR)
     
     list_intro_full_fillna = [2051 if e == 'nan' or e == 'NaN' else e for e in list_intro_full]
-    decisions = ('Subsidy', 'Regulation', 'Investment', 'Operation')
+    # decisions = ('Subsidy', 'Regulation', 'Investment', 'Operation')
+    decisions = ('Subsidy', 'Regulation', 'Openness', 'Insurance')
     for ii, decision in enumerate(decisions):
-        show_tradespace_for_multiple_color_notext(list_intro_full_fillna, list_profit, 'Introduction of FullAuto ship (year)', 'Profit (USD)', 'Intro(Full) vs Profit', casetype, ii, decision, DIR, True, False)
-        show_tradespace_for_multiple_color_notext(list_intro_full_fillna, list_ROI, 'Introduction of FullAuto ship (year)', 'RoI (-)', 'Intro(Full) vs RoI', casetype, ii, decision, DIR, True, False)
-        show_tradespace_for_multiple_color_notext(list_intro_full_fillna, list_accident, 'Introduction of FullAuto ship (year)', 'Estimated number of accidents (case/year)', 'Intro(Full) vs Safety', casetype, ii, decision, DIR, True, False)
-        show_tradespace_for_multiple_color_notext(list_ROI, list_accident, 'RoI (-)', 'Estimated number of accidents (case/year)', 'RoI vs Safety', casetype, ii, decision, DIR)
-        show_tradespace_for_multiple_color_notext(list_ROI, list_seafarer, 'RoI (-)', 'Average number of seafarer (person)', 'RoI vs Human Resource', casetype, ii, decision, DIR)
-        show_tradespace_for_multiple_color_notext(list_intro_auto, list_ROI, 'Introduction of Auto ship (year)', 'RoI (-)', 'Intro(Auto) vs RoI', casetype, ii, decision, DIR, True, False)
-        show_tradespace_for_multiple_color_notext(list_intro_auto, list_accident, 'Introduction of Auto ship (year)', 'Estimated number of accidents (case/year)', 'Intro(Auto) vs Safety', casetype, ii, decision, DIR, True, False)
-        show_tradespace_for_multiple_color_notext(list_intro_auto, list_intro_full_fillna, 'Introduction of Auto ship (year)', 'Introduction of FullAuto ship (year)', 'Intro(Auto) vs Intro(Full)', casetype, ii, decision, DIR, True, True)
+        show_tradespace_for_multiple_color(list_intro_full_fillna, list_profit, 'Introduction of FullAuto ship (year)', 'Profit (USD)', 'Intro(Full) vs Profit', casetype, ii, decision, DIR, True, False)
+        show_tradespace_for_multiple_color(list_intro_full_fillna, list_ROI, 'Introduction of FullAuto ship (year)', 'RoI (-)', 'Intro(Full) vs RoI', casetype, ii, decision, DIR, True, False)
+        show_tradespace_for_multiple_color(list_intro_full_fillna, list_accident, 'Introduction of FullAuto ship (year)', 'Estimated number of accidents (case/year)', 'Intro(Full) vs Safety', casetype, ii, decision, DIR, True, False)
+        show_tradespace_for_multiple_color(list_ROI, list_accident, 'RoI (-)', 'Estimated number of accidents (case/year)', 'RoI vs Safety', casetype, ii, decision, DIR)
+        show_tradespace_for_multiple_color(list_ROI, list_seafarer, 'RoI (-)', 'Average number of seafarer (person)', 'RoI vs Human Resource', casetype, ii, decision, DIR)
+        show_tradespace_for_multiple_color(list_intro_auto, list_ROI, 'Introduction of Auto ship (year)', 'RoI (-)', 'Intro(Auto) vs RoI', casetype, ii, decision, DIR, True, False)
+        show_tradespace_for_multiple_color(list_intro_auto, list_accident, 'Introduction of Auto ship (year)', 'Estimated number of accidents (case/year)', 'Intro(Auto) vs Safety', casetype, ii, decision, DIR, True, False)
+        show_tradespace_for_multiple_color(list_intro_auto, list_intro_full_fillna, 'Introduction of Auto ship (year)', 'Introduction of FullAuto ship (year)', 'Intro(Auto) vs Intro(Full)', casetype, ii, decision, DIR, True, True)
         
     result_df = pd.DataFrame({
         'Casename': casename,
