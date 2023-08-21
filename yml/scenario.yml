@@ -9,11 +9,11 @@ Operator:
 Regulator:
   TRL_regulation: 7
   subsidy_adoption: 1000000
-  subsidy_randd: 4000000
+  subsidy_randd: 3000000
 ship_age: 25
 ship_demand:
-  annual_growth: 1.01
-  initial_number: 100
+  annual_growth: 0.99
+  initial_number: 344
 ship_size: 499
 sim_setting:
   end_year: 2050
