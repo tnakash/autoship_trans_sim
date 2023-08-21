@@ -209,7 +209,9 @@ def main():
 
         # proceed year
         st.session_state.Year += dt_year
-        
+
+        fleet_t = fleet.T
+        fleet_ratio = (fleet_t/fleet_t.sum()).T        
         totalcost = copy.copy(building)
         accident = copy.copy(building)
         
@@ -350,15 +352,18 @@ def main():
                 intro_year_tmp = int(fleet[fleet[config_list[i]] > 0].index[0])
                 intro_year_auto = intro_year_tmp if intro_year_tmp < intro_year_auto else intro_year_auto 
         
+        num_crew_all = fleet[crew_list].sum(axis=1)
+
         final = {'Autonomous Ship introduction (year)': intro_year_auto,
                  'Full Autonomous Ship introduction (year)': intro_year_full,
-                #  'Autonomous Ship introduction ratio at 2040 (-)': autoratio_2040,
-                #  'Full Autonomous Ship introduction ratio at 2040 (-)': fullratio_2040,
+                 'Autonomous Ship introduction ratio at 2040 (-)': 1 - fleet_ratio.at[2040, 'NONE'],
+                 'Full Autonomous Ship introduction ratio at 2040 (-)': fleet_ratio.at[2040, 'FULL'],
+                 'Number of crew at 2040': int(num_crew_all.at[2040]),
                  'Total Profit (USD)': int(fleet['Profit'].sum()), 
                  'Total Investment for R&D (incl. Subsidy) (USD)': int(subsidy_accum['All_investment'].sum()),
                  'Total Subsidy (USD)': int(subsidy_accum['Subsidy_used'].sum()), 
-                 'ROI (R&D Expenditure based)': fleet['Profit'].sum()/subsidy_accum['All_investment'].sum(),
-                 'ROI (Subsidy based)': fleet['Profit'].sum()/subsidy_accum['Subsidy_used'].sum(),
+                 'ROI (R&D Expenditure based) (-)': fleet['Profit'].sum()/subsidy_accum['All_investment'].sum(),
+                 'ROI (Subsidy based) (-)': fleet['Profit'].sum()/subsidy_accum['Subsidy_used'].sum(),
                  'Average number of Accident (case/year)': int(fleet[accident_list].sum(axis=1).sum()/(end_year-start_year+1)),
                  'Average number of seafarer (person/year)': int(fleet[crew_list].sum(axis=1).sum()/(end_year-start_year+1)),
                  'R&D Need TRL': param.rd_need_TRL}

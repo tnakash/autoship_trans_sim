@@ -41,7 +41,7 @@ def show_tradespace_for_multiple(a, b, alabel, blabel, title, list, directory, x
     fig.savefig(directory+'/'+title+'.png')
 
 
-def show_tradespace_for_multiple_color(a, b, alabel, blabel, title, cases, k, color, directory, x_int=False, y_int=False):
+def show_tradespace_for_multiple_color_old(a, b, alabel, blabel, title, cases, k, color, directory, x_int=False, y_int=False):
     fig = plt.figure(figsize=(15,15))
     sub = ('R&D', 'Ado', 'Exp')
     reg = ('Asis', 'Relax')
@@ -322,3 +322,31 @@ def show_tradespace_anime(a, b, alabel, blabel, list, selected_index, directory,
 
     ani = animation.ArtistAnimation(fig, ims, interval=300)
     ani.save(directory+'/tradespace.gif', writer='pillow')
+
+
+def show_tradespace_for_multiple_color(a, b, alabel, blabel, title, cases, directory, x_int=False, y_int=False):
+    fig = plt.figure(figsize=(15,15))
+    cm=plt.get_cmap('tab20')
+    
+    for j, option in enumerate(cases):
+        a_0 = [aa for i, aa in enumerate(a) if cases[i] == option]
+        b_0 = [bb for i, bb in enumerate(b) if cases[i] == option]
+        plt.scatter(x=a_0, y=b_0, c=[cm(j)], label=option)
+        
+    plt.title(title)
+    plt.xlabel(alabel)
+    plt.ylabel(blabel)
+    plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left')
+    if x_int:
+        plt.gca().get_xaxis().set_major_locator(ticker.MaxNLocator(integer=True))
+    if y_int:
+        plt.gca().get_yaxis().set_major_locator(ticker.MaxNLocator(integer=True))
+    
+    texts = []
+    for j, case in enumerate(cases):
+        # text = plt.annotate(case[0]+'_'+case[1]+'_'+case[2]+'_'+case[3], (a[j], b[j]))
+        text = plt.annotate(case, (a[j], b[j]))
+        texts.append(text)
+    # adjust_text(texts, arrowprops=dict(arrowstyle='-', color='gray', lw=0.5))
+    fig.savefig(directory+'/'+title +'.png')
+    plt.close()

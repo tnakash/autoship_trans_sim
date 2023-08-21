@@ -190,7 +190,7 @@ def trl_rate(trl):
     # trl_rate = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0.25, 8: 0.5, 9: 1}
     return trl_rate
 
-def get_tech_ini(tech_yml, uncertainty):
+def get_tech_ini(tech_yml, uncertainty, trl_b = 0, trl_n = 0, trl_m = 0):
     tech_list = ['Berth', 'Navi', 'Moni'] # ideally from yml
     column = ['tech_name', 'tech_cost', 'integ_factor', 'integ_factor_ini', 'TRL', 'Rexp', 'Mexp', 'Oexp', 'tech_cost_min', 'accident_ratio', 'accident_ratio_base', 'accident_ratio_ini']
 
@@ -217,9 +217,12 @@ def get_tech_ini(tech_yml, uncertainty):
     rd_need_TRL = [0] * len(tech_list)
     # Introduce Uncertainty
     if uncertainty:
-        for i in range(3):
-            rd_need_TRL[i] = np.random.normal(tech_yml['Others']['rd_need_TRL'], tech_yml['Others']['rd_need_TRL']/3)
-            rd_need_TRL[i] = 0 if rd_need_TRL[i] < 0 else rd_need_TRL[i] 
+        rd_need_TRL[0] = trl_b
+        rd_need_TRL[1] = trl_n
+        rd_need_TRL[2] = trl_m
+        # for i in range(3):
+        #     rd_need_TRL[i] = np.random.normal(tech_yml['Others']['rd_need_TRL'], tech_yml['Others']['rd_need_TRL']/3)
+        #     rd_need_TRL[i] = 0 if rd_need_TRL[i] < 0 else rd_need_TRL[i] 
     else:
         for i in range(3):
             rd_need_TRL[i] = tech_yml['Others']['rd_need_TRL']
