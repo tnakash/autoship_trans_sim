@@ -24,69 +24,83 @@ def get_yml(filename):
     return dic_yml
 
 # Set scenario by yaml
-def get_scenario(scenario):
+def get_scenario(scenario, ship_types):
     # column = ['Year', 'NumofShip', 'Newbuilding', 'Scrap']
-    
-    ship_initial = scenario['ship_demand']['initial_number']
-    annual_growth = scenario['ship_demand']['annual_growth']
-    ship_age = scenario['ship_age']
     start_year = scenario['sim_setting']['start_year']
     end_year = scenario['sim_setting']['end_year']
-    
-    # config_list = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
-    
-    sim_years = len(list(range(start_year, end_year+1)))    
-    NumofShip = [0] * sim_years
-    num_newbuilding_ship = [0] * sim_years
-    Scrap = [0] * sim_years
-    for i in range (sim_years):
-        NumofShip[i] = int(NumofShip[i-1] * annual_growth) + random.randint(-UNCERTAINTY,UNCERTAINTY) if i>0 else ship_initial
-        Scrap[i]= int(ship_initial/ship_age) if i <= ship_age else num_newbuilding_ship[i-ship_age]
-        num_newbuilding_ship[i] = NumofShip[i] + Scrap[i] - NumofShip[i-1] if i>0 else int(ship_initial/ship_age)
-    
-    # current_fleet = pd.DataFrame({'year': range(start_year-ship_age, start_year), 
-    #                               config_list[0]: [ship_initial//ship_age] * ship_age,
-    #                               config_list[1]: [0] * ship_age,
-    #                               config_list[2]: [0] * ship_age,
-    #                               config_list[3]: [0] * ship_age,
-    #                               config_list[4]: [0] * ship_age,
-    #                               config_list[5]: [0] * ship_age,
-    #                               config_list[6]: [0] * ship_age,
-    #                               config_list[7]: [0] * ship_age,
-    #                               config_list[8]: [0] * ship_age,
-    #                               config_list[9]: [0] * ship_age,
-    #                               config_list[10]: [0] * ship_age,
-    #                               config_list[11]: [0] * ship_age})
 
-    ship_size = scenario['ship_size']
-    columns = ['year', 'ship_id', 'year_built', 'DWT', 'berthing', 'navigation', 'monitoring', 'config', 'is_operational', 'misc', 'owner']    
+    ship_initial = [0] * len(ship_types)
+    annual_growth = [0] * len(ship_types)
+    ship_age = [0] * len(ship_types)
+    ship_size = [0] * len(ship_types)
+    for h in range(len(ship_types)):
+        ship_initial[h] = scenario['Ship'][ship_types[h]]['initial_number']
+        annual_growth[h] = scenario['Ship'][ship_types[h]]['annual_growth']
+        ship_age[h] = scenario['Ship'][ship_types[h]]['ship_age']
+        ship_size[h] = scenario['Ship'][ship_types[h]]['ship_size']
+
+    sim_years = len(list(range(start_year, end_year+1)))
+    # NumofShip = [[0] * sim_years] * len(ship_types)
+    # num_newbuilding_ship = [[0] * sim_years] * len(ship_types)
+    # Scrap = [[0] * sim_years] * len(ship_types)
+    NumofShip = [[0] * sim_years for _ in range(len(ship_types))]
+    num_newbuilding_ship = [[0] * sim_years for _ in range(len(ship_types))]
+    Scrap = [[0] * sim_years for _ in range(len(ship_types))]
+    for h in range(len(ship_types)):
+        for i in range (sim_years):
+            if i == 0:
+                NumofShip[h][i] = ship_initial[h]
+            elif i > 10: # To Be Deleted
+                NumofShip[h][i] = NumofShip[h][i-1]
+            else:
+                NumofShip[h][i] = int(NumofShip[h][i-1] * annual_growth[h]) + random.randint(-UNCERTAINTY,UNCERTAINTY)
+            Scrap[h][i]= int(ship_initial[h]/ship_age[h]) if i <= ship_age[h] else num_newbuilding_ship[h][i-ship_age[h]]
+            num_newbuilding_ship[h][i] = NumofShip[h][i] + Scrap[h][i] - NumofShip[h][i-1] if i>0 else int(ship_initial[h]/ship_age[h])
+
+    # ship_size = scenario['ship_size']
+    columns = ['year', 'ship_id', 'year_built', 'ship_type', 'DWT', 'berthing', 'navigation', 'monitoring', 'config', 'is_operational', 'misc', 'owner']    
     current_fleet = pd.DataFrame(columns=columns)
+
     ship_id = 0
-    for i in range(ship_age):
-        for j in range(ship_initial//ship_age):
-            ship_id += 1
-            new_row = pd.Series({'year': start_year, 'ship_id': ship_id, 'year_built': start_year-ship_age+i, 'DWT': ship_size, 'berthing': 0, 'navigation': 0, 'monitoring': 0, 'config': 'NONE', 'is_operational': True, 'misc': 'default', 'owner': 'default'})
-            # current_fleet = pd.concat([current_fleet, new_row], ignore_index=True)
-            current_fleet.loc[len(current_fleet)] = new_row
+    for h in range(len(ship_types)):
+        for i in range(ship_age[h]):
+            for j in range(ship_initial[h]//ship_age[h]):
+                ship_id += 1
+                new_row = pd.Series({'year': start_year, 'ship_id': ship_id, 'year_built': start_year-ship_age[h]+i, 'ship_type': ship_types[h], 'DWT': ship_size[h], 'berthing': 0, 'navigation': 0, 'monitoring': 0, 'config': 'NONE', 'is_operational': True, 'misc': 'default', 'owner': 'default'})
+                # current_fleet = pd.concat([current_fleet, new_row], ignore_index=True)
+                current_fleet.loc[len(current_fleet)] = new_row
 
     num_newbuilding_year = list(range(start_year, end_year+1))
-    num_newbuilding = pd.DataFrame({'year': num_newbuilding_year, 'ship': num_newbuilding_ship})
+    num_newbuilding = [0] * len(ship_types)
+    for h in range(len(ship_types)):
+        temp = pd.DataFrame({'year': num_newbuilding_year, 'DWT': ship_size[h], 'ship': num_newbuilding_ship[h]})
+        if h == 0:
+            num_newbuilding = temp
+        else:
+            num_newbuilding = pd.concat([num_newbuilding, temp])
 
-    return current_fleet, num_newbuilding
+    return current_fleet, num_newbuilding, ship_age, ship_size
 
-def set_scenario(start_year, end_year, initial_number, annual_growth, ship_age, economy, safety, estimated_loss, subsidy_randd, subsidy_adoption, TRL_regulation, Manu_loop, Ope_loop_TRL, Ope_loop_Safety, ship_size):
+def set_scenario(start_year, end_year, annual_growth, ship_age, economy, safety, estimated_loss, subsidy_randd, subsidy_adoption, TRL_regulation, Manu_loop, Ope_loop_TRL, Ope_loop_Safety):
     # with open(homedir + "yml/scenario/scenario_"+casename+".yml", "w") as yf: # Google Colab用に変更
+    ships_data = [
+        {"ship_size": 99, "ship_age": ship_age, "initial_number": 181, "annual_growth": annual_growth[0]}, # 1810
+        {"ship_size": 199, "ship_age": ship_age, "initial_number": 62, "annual_growth": annual_growth[1]}, # 623
+        {"ship_size": 499, "ship_age": ship_age, "initial_number": 163, "annual_growth": annual_growth[2]}, #1625
+        {"ship_size": 749, "ship_age": ship_age, "initial_number": 61, "annual_growth": annual_growth[3]}, # 611
+        {"ship_size": 3000, "ship_age": ship_age, "initial_number": 54, "annual_growth": annual_growth[4]} # 543
+        ]
+    ships_dict = {}
+    for i, ship_data in enumerate(ships_data, start=1):
+        ships_dict[f"ship_{i}"] = ship_data
+    
     with open(homedir + "yml/scenario.yml", "w") as yf: # Google Colab用に変更
         yaml.dump({
             "sim_setting": {
                 "start_year": start_year, 
                 "end_year": end_year
             },
-            "ship_demand": {
-                "initial_number": initial_number,
-                "annual_growth": annual_growth
-            },
-            "ship_age": ship_age,
+            "Ship": ships_dict,
             "Operator": {
                 "economy": economy,
                 "safety": safety,
@@ -101,8 +115,7 @@ def set_scenario(start_year, end_year, initial_number, annual_growth, ship_age, 
                 "Manu_loop": Manu_loop,
                 "Ope_loop_TRL": Ope_loop_TRL,
                 "Ope_loop_Safety": Ope_loop_Safety
-            },
-            "ship_size": ship_size,
+            }
         }, yf, default_flow_style=False)
 
 def set_tech(ope_safety_b, ope_TRL_factor):

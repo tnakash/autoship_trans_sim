@@ -1,0 +1,41 @@
+OPEX:
+    crew_cost: 1020820 
+    store_cost: 60680 
+    maintenance_cost: 48419 
+    insurance_cost: 27553 
+    general_cost: 59693 
+    dock_cost: 72628 
+
+CAPEX: # Assume ship year as 25 yrs
+    material_cost: 327698 
+    integrate_cost: 163849 
+
+VOYEX:
+    port_call: 130291 
+    fuel_cost_ME: 399390 
+    fuel_cost_AE: 60777 
+
+AddCost: # should estimate from the basic?
+    SCC_Capex: 23444 
+    SCC_Opex: 11181
+    SCC_Personal: 132889
+    Mnt_in_port: 155250
+
+Others:
+    navi_crew_factor: 0.60 
+    moni_crew_factor: 0.30 
+    cook_crew_factor: 0.10 
+    mainte_amount: 12105 
+    capex_material_ratio: 0.67 
+    accom_reduce_navi: 0.025 
+    accom_reduce_moni: 0.025 
+    num_crew_navi: 6 
+    num_crew_moni: 3 
+    num_crew_cook: 1 
+    berth_pilot_save: 60000 
+    ME_no_bridge_rate: 0.036 
+    AE_crew_rate: 0.4 
+    TRLgap_semi: 3 
+    num_crew_navi_scc: 1 
+    num_crew_moni_scc: 1 
+    retrofit_fee: 30000 

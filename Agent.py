@@ -45,82 +45,58 @@ class Investor():
 
 
 class ShipOwner:
-    def __init__(self, name, economy=1.0, safety=1.0, current_fleet=None, num_newbuilding=None, estimated_loss=10000000):
+    def __init__(self, name, economy=1.0, safety=1.0, current_fleet=None, num_newbuilding=None, estimated_loss=25):
         self.name = name
         self.economy = economy
         self.safety = safety
         self.fleet = current_fleet
         self.num_newbuilding = num_newbuilding
-        self.accident_loss = estimated_loss
+        self.accident_loss = estimated_loss # compared to annual capex
 
     def reset(self, economy, safety, current_fleet):
         self.economy = economy
         self.safety = safety
         self.fleet = current_fleet
 
-    def select_ship(self, spec, tech, TRLreg):
-        # Rewrite afterwards ... 
-        berth_list = [1, 5, 6, 7, 10, 11]
-        navi1_list = [2, 5, 8, 10]
-        navi2_list = [3, 6, 9, 11]
-        moni_list = [4, 7, 8, 9, 10, 11]
+    def one_step(self, year):
+        filtered_data = self.fleet[(self.fleet['year'] == year - 1) & (self.fleet['is_operational'] == True)].copy()
+        filtered_data['year'] = year
+        self.fleet = pd.concat([self.fleet, filtered_data], ignore_index=True)
 
+    def select_ship(self, spec, tech, TRLreg):
         capex_sum, opex_sum, voyex_sum, addcost_sum, accident_sum = calculate_assumption(spec)
         annual_cost = opex_sum + capex_sum + voyex_sum + addcost_sum
-        select_parameter = annual_cost * self.economy + accident_sum * self.safety * self.accident_loss - spec['subsidy']
-
-        # Consider TRL regulation
-        for i in berth_list:
-            select_parameter[i] += float('inf') if tech.TRL[0] < TRLreg else 0
-        for i in navi1_list:
-            select_parameter[i] += float('inf') if tech.TRL[1] + 3 < TRLreg else 0
-        for i in navi2_list:
-            select_parameter[i] += float('inf') if tech.TRL[1] < TRLreg else 0
-        for i in moni_list:
-            select_parameter[i] += float('inf') if tech.TRL[2] < TRLreg else 0
-
+        select_parameter = annual_cost * self.economy + accident_sum * self.safety * capex_sum * self.accident_loss - spec['subsidy']
+        select_parameter = consider_TRL_regulation(select_parameter, tech.TRL, TRLreg)
         select = select_parameter.idxmin()
         if math.isnan(select):
             select = 0
 
         return select
 
-
-    def purchase_ship(self, config_list, select, year, start_year):
-        # self.fleet.loc[len(self.fleet.year)] = 0
-        # self.fleet.at[len(self.fleet.year)-1, 'year'] = self.fleet.at[len(self.fleet.year)-2, 'year'] + 1
-        # self.fleet.at[len(self.fleet.year)-1, config_list[select]] = self.num_newbuilding['ship'][year]
-        # # self.fleet.at[len(self.fleet.year)-1, 'config'+str(select)] = self.num_newbuilding['ship'][year]        
+    def purchase_ship(self, config_list, select, year, start_year, ship_size, ship_type):
         berth, navi, moni = config_to_tech(select)
-        ship_size = 499 # to be an input
-        for i in range(self.num_newbuilding['ship'][year]):
-            new_row = pd.Series({'year': start_year+year, 'ship_id': self.fleet['ship_id'].max() + 1, 'year_built': start_year+year, 'DWT': ship_size, 'berthing': berth, 'navigation': navi, 'monitoring': moni, 'config': config_list[select], 'is_operational': True, 'misc': 'newbuilt', 'owner': self})
-            # self.fleet = pd.concat([self.fleet, new_row], ignore_index=True)
+        for i in range(self.num_newbuilding.loc[(self.num_newbuilding['year'] == start_year + year) & (self.num_newbuilding['DWT'] == ship_size),'ship'].values[0]):
+            new_row = pd.Series({'year': start_year+year, 
+                                 'ship_id': self.fleet['ship_id'].max() + 1, 
+                                 'year_built': start_year+year, 
+                                 'ship_type': ship_type,
+                                 'DWT': ship_size, 
+                                 'berthing': berth, 
+                                 'navigation': navi, 
+                                 'monitoring': moni, 
+                                 'config': config_list[select], 
+                                 'is_operational': True, 
+                                 'misc': 'newbuilt', 
+                                 'owner': self
+                                 })
             self.fleet.loc[len(self.fleet)] = new_row
 
-
-    def purchase_ship_with_adoption(self, spec, config_list, select, tech, year, TRLreg, PolicyMaker, start_year):
-        # Rewrite afterwards ... 
-        berth_list = [1, 5, 6, 7, 10, 11]
-        navi1_list = [2, 5, 8, 10]
-        navi2_list = [3, 6, 9, 11]
-        moni_list = [4, 7, 8, 9, 10, 11]
-        
-        # 同じ計算をあちこちでやっているが，ここはあえて色々な選好パターンを作る目的で．
+    def purchase_ship_with_adoption(self, spec, config_list, select, tech, year, TRLreg, PolicyMaker, start_year, ship_size):
         capex_sum, opex_sum, voyex_sum, addcost_sum, accident_sum = calculate_assumption(spec)
         annual_cost = opex_sum + capex_sum + voyex_sum + addcost_sum                
-        select_parameter = annual_cost * self.economy + accident_sum * self.safety * self.accident_loss - spec['subsidy']
-        
-        # Consider TRL regulation
-        for i in berth_list:
-            select_parameter[i] += float('inf') if tech.TRL[0] < TRLreg else 0
-        for i in navi1_list:
-            select_parameter[i] += float('inf') if tech.TRL[1] + 3 < TRLreg else 0
-        for i in navi2_list:
-            select_parameter[i] += float('inf') if tech.TRL[1] < TRLreg else 0
-        for i in moni_list:
-            select_parameter[i] += float('inf') if tech.TRL[2] < TRLreg else 0
-
+        select_parameter = annual_cost * self.economy + accident_sum * self.safety * capex_sum * self.accident_loss - spec['subsidy']
+        select_parameter = consider_TRL_regulation(select_parameter, tech.TRL, TRLreg)
         select = select_parameter.idxmin()
         if math.isnan(select):
             select = 0
@@ -128,20 +104,16 @@ class ShipOwner:
         if PolicyMaker.sub_select != select:
             PolicyMaker.sub_per_ship = select_parameter[PolicyMaker.sub_select] - select_parameter[select]
             num_subsidized_ship_possible = PolicyMaker.sub_Adoption // PolicyMaker.sub_per_ship
-            num_subsidized_ship = self.num_newbuilding['ship'][year] if self.num_newbuilding['ship'][year] < num_subsidized_ship_possible else num_subsidized_ship_possible
+            newbuilding_ship = self.num_newbuilding.loc[(self.num_newbuilding['year'] == start_year + year) & (self.num_newbuilding['DWT'] == ship_size),'ship'].values[0]
+            num_subsidized_ship = newbuilding_ship if newbuilding_ship < num_subsidized_ship_possible else num_subsidized_ship_possible
             PolicyMaker.sub_used += num_subsidized_ship * PolicyMaker.sub_per_ship
         else:
             PolicyMaker.sub_per_ship = 0
             num_subsidized_ship = 0
 
-        # # self.fleet.at[len(self.fleet.year)-1, 'config'+str(PolicyMaker.sub_select)] = num_subsidized_ship
-        # # self.fleet.at[len(self.fleet.year)-1, 'config'+str(select)] = self.num_newbuilding['ship'][year] - num_subsidized_ship
-        # self.fleet.at[len(self.fleet.year)-1, config_list[PolicyMaker.sub_select]] = num_subsidized_ship
-        # self.fleet.at[len(self.fleet.year)-1, config_list[select]] = self.num_newbuilding['ship'][year] - num_subsidized_ship
-
         berth, navi, moni = config_to_tech(PolicyMaker.sub_select)
-        list = self.fleet.loc[self.fleet['year_built'] == start_year+year]
-        self.fleet = self.fleet.drop(self.fleet.loc[self.fleet['year_built'] == start_year+year].index)
+        list = self.fleet.loc[(self.fleet['year_built'] == start_year + year) & (self.fleet['DWT'] == ship_size)]
+        self.fleet = self.fleet.drop(self.fleet.loc[(self.fleet['year_built'] == start_year + year) & (self.fleet['DWT'] == ship_size)].index)
         for i in range(int(num_subsidized_ship)):
             list.iloc[i]['config'] = config_list[PolicyMaker.sub_select]
             list.iloc[i]['berthing'] = berth
@@ -152,48 +124,26 @@ class ShipOwner:
         self.fleet = pd.concat([self.fleet, list], ignore_index= True)
 
 
-    # def retrofit_ship(self, config_list, select_retrofit, year):
-    #     self.fleet.loc[len(self.fleet.year)] = 0
-    #     self.fleet.at[len(self.fleet.year)-1, 'year'] = self.fleet.at[len(self.fleet.year)-2, 'year'] + 1
-    #     self.fleet.at[len(self.fleet.year)-1, config_list[select]] = self.num_newbuilding['ship'][year]
-    #     # self.fleet.at[len(self.fleet.year)-1, 'config'+str(select)] = self.num_newbuilding['ship'][year]
-
-
     def scrap_ship(self, ship_age, year, start_year):
-         for i in self.fleet.index.values: #range(len(self.fleet)):
-            if (self.fleet.at[i, 'is_operational'] == True) and ((start_year + year) - self.fleet.at[i, 'year_built'] > ship_age):
-                self.fleet.at[i, 'is_operational'] = False
-        
-
-    def select_retrofit_ship(self, spec, tech, TRLreg, ship_age, retrofit_cost, config_list, year, start_year, retrofit_limit):
-        # Rewrite afterwards ... 
-        berth_list = [1, 5, 6, 7, 10, 11]
-        navi1_list = [2, 5, 8, 10]
-        navi2_list = [3, 6, 9, 11]
-        moni_list = [4, 7, 8, 9, 10, 11]
-
+        filtered_fleet = self.fleet[(self.fleet['year'] == start_year + year) & (start_year + year - self.fleet['year_built'] >= ship_age)].copy()
+        filtered_fleet['is_operational'] = False
+        self.fleet.update(filtered_fleet)
+    
+    
+    def select_retrofit_ship(self, spec, tech, TRLreg, ship_age, retrofit_cost_rate, config_list, year, start_year, retrofit_limit, ship_size):
         capex_sum, opex_sum, voyex_sum, addcost_sum, accident_sum = calculate_assumption_for_retrofit(spec)
         annual_cost = opex_sum + capex_sum + voyex_sum + addcost_sum
-
+        retrofit_cost = annual_cost[0] * retrofit_cost_rate
         retrofitted_ship = 0
-        for i in reversed(self.fleet.index.values):
+        filtered_fleet = self.fleet[(self.fleet['year'] == start_year + year) & (self.fleet['DWT'] == ship_size)]
+        for i in reversed(filtered_fleet.index.values):
             if (self.fleet.at[i, 'is_operational'] == False) or (self.fleet.at[i, 'year'] == self.fleet.at[i, 'year_built']):
                 continue
             else:
                 years_in_use = self.fleet.at[i, 'year'] - self.fleet.at[i, 'year_built']
-                select_parameter = (annual_cost * self.economy + accident_sum * self.safety * self.accident_loss) * (ship_age - years_in_use) + retrofit_cost
-                select_parameter[config_list.index(self.fleet.at[i, 'config'])] -= retrofit_cost
-            
-                # Consider TRL regulation
-                for j in berth_list:
-                    select_parameter[j] += float('inf') if tech.TRL[0] < TRLreg else 0
-                for j in navi1_list:
-                    select_parameter[j] += float('inf') if tech.TRL[1] + 3 < TRLreg else 0
-                for j in navi2_list:
-                    select_parameter[j] += float('inf') if tech.TRL[1] < TRLreg else 0
-                for j in moni_list:
-                    select_parameter[j] += float('inf') if tech.TRL[2] < TRLreg else 0
-                
+                select_parameter = (annual_cost * self.economy + accident_sum * self.safety * capex_sum * self.accident_loss) * (ship_age - years_in_use) + retrofit_cost
+                select_parameter[config_list.index(self.fleet.at[i, 'config'])] -= retrofit_cost 
+                select_parameter = consider_TRL_regulation(select_parameter, tech.TRL, TRLreg)
                 select = select_parameter.idxmin()
                 if math.isnan(select):
                     select = 0
@@ -203,19 +153,26 @@ class ShipOwner:
                 if self.fleet.at[i, 'config'] == config_list[select] or self.fleet.at[i, 'berthing'] > berth or self.fleet.at[i, 'navigation'] > navi or self.fleet.at[i, 'monitoring'] > moni:
                     continue
                 else:
-                    self.fleet.at[i, 'is_operational'] = False
-                    new_row = pd.Series({'year': start_year+year, 'ship_id': self.fleet.at[i, 'ship_id'], 'year_built': self.fleet.at[i, 'year_built'], 'DWT': self.fleet.at[i, 'DWT'], 'berthing': berth, 'navigation': navi, 'monitoring': moni, 'config': config_list[select], 'is_operational': True, 'misc': 'retrofitted', 'owner': self})
+                    new_row = pd.Series({'year': start_year+year, 
+                                         'ship_id': self.fleet.at[i, 'ship_id'], 
+                                         'year_built': self.fleet.at[i, 'year_built'], 
+                                         'ship_type': self.fleet.at[i, 'ship_type'],
+                                         'DWT': self.fleet.at[i, 'DWT'], 
+                                         'berthing': berth, 
+                                         'navigation': navi, 
+                                         'monitoring': moni, 
+                                         'config': config_list[select], 
+                                         'is_operational': True, 
+                                         'misc': 'retrofitted', 
+                                         'owner': self})
                     retrofitted_ship += 1
                     if(retrofitted_ship > retrofit_limit):
-                        self.fleet.at[i, 'is_operational'] = True
                         break
-                    self.fleet.loc[len(self.fleet)] = new_row
+                    else:
+                        self.fleet.loc[i] = new_row
 
 
 def calculate_assumption(spec):
-    # Can be re-categorized
-    # labour_cost = spec.crew_cost + spec.SCC_Personal
-    # fuel_cost   = spec.fuel_cost_ME + spec.fuel_cost_AE 
     capex_sum   = spec.material_cost + spec.integrate_cost + spec.add_eq_cost
     opex_sum    = spec.crew_cost + spec.store_cost + spec.maintenance_cost + spec.insurance_cost+ spec.general_cost + spec.dock_cost
     voyex_sum   = spec.port_call + spec.fuel_cost_ME + spec.fuel_cost_AE
@@ -241,9 +198,8 @@ def config_to_tech(config_number):
     navi1_list = [2, 5, 8, 10]
     navi2_list = [3, 6, 9, 11]
     moni_list = [4, 7, 8, 9, 10, 11]
-    
     tech_berth, tech_navi, tech_moni = 0, 0, 0
-    
+
     if config_number in berth_list:
         tech_berth = 1
     
@@ -257,6 +213,23 @@ def config_to_tech(config_number):
     
     return tech_berth, tech_navi, tech_moni
 
+
+def consider_TRL_regulation(select_parameter, TRL, TRLreg):
+    berth_list = [1, 5, 6, 7, 10, 11]
+    navi1_list = [2, 5, 8, 10]
+    navi2_list = [3, 6, 9, 11]
+    moni_list = [4, 7, 8, 9, 10, 11]
+    
+    for i in berth_list:
+        select_parameter[i] += float('inf') if TRL[0] < TRLreg else 0
+    for i in navi1_list:
+        select_parameter[i] += float('inf') if TRL[1] + 3 < TRLreg else 0
+    for i in navi2_list:
+        select_parameter[i] += float('inf') if TRL[1] < TRLreg else 0
+    for i in moni_list:
+        select_parameter[i] += float('inf') if TRL[2] < TRLreg else 0
+    
+    return select_parameter
 
 class PolicyMaker():
     def __init__(self):
@@ -287,7 +260,7 @@ class PolicyMaker():
                 break
     
     def subsidize_experience(self, tech, TRLreg):
-        for i in range(3):
+        for i in range(len(tech.TRL)):
             if tech.TRL[i] < TRLreg:
                 tech.loc[i, ["Mexp"]] += self.sub_Experience / (tech.tech_cost[i] * self.trial_times)
                 tech.loc[i, ["Oexp"]] += self.sub_Experience / (tech.tech_cost[i] * self.trial_times)

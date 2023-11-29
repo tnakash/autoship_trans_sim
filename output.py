@@ -4,8 +4,40 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import streamlit as st
 import pandas as pd
+import numpy as np
 from adjustText import adjust_text
+import seaborn as sns
 
+
+# カスタムカラーマップの定義
+cmap_colors = [
+    (0.9, 0.9, 0.9),   # NONE - 薄いグレー
+    (1, 0, 0),         # B - 赤
+    (0, 0.9, 1),       # N1 - 薄い青
+    (0, 0.5, 1),       # N2 - 濃い青
+    (1, 1, 0),         # M - 黄色
+    (1, 0, 1),         # BN1 - 薄い紫
+    (0.6, 0, 1),       # BN2 - 濃い紫
+    (1, 0.5, 0),       # BM - オレンジ
+    (0, 1, 0),         # N1M - 薄い緑
+    (0, 0.5, 0),       # N2M - 濃い緑
+    (0.2, 0.5, 0.5),   # BN1M - 濃いグレー
+    (0.2, 0.2, 0.2)    # FULL - 黒
+]
+
+cmap_name = 'custom_cmap'
+custom_cmap = plt.cm.colors.ListedColormap(cmap_colors, name=cmap_name, N=len(cmap_colors))
+
+cmap_colors_crew = [
+    (0, 0.5, 1),       # N1 - 薄い青
+    (0, 0, 0.5),       # N2 - 濃い青
+    (1, 1, 0),         # M - 黄色
+    (1, 0, 1),         # BN1 - 薄い紫
+    (0.6, 0, 1),       # BN2 - 濃い紫
+]
+
+cmap_name = 'custom_cmap_crew'
+custom_cmap_crew = plt.cm.colors.ListedColormap(cmap_colors_crew, name=cmap_name, N=len(cmap_colors_crew))
 
 def show_tradespace_general(a, b, alabel, blabel, title, list, selected_index, directory):
     fig = plt.figure(figsize=(10,10))
@@ -171,6 +203,28 @@ def make_dataframe_for_output(start_year, end_year, config_list):
     return df_new
 
 
+def make_dataframe_for_output_multiple(start_year, end_year, config_list, ship_type_list):
+    for i in range(len(ship_type_list)):
+        df = pd.DataFrame({'year': range(start_year, end_year),
+                            config_list[0]: [0] * (end_year - start_year),
+                            config_list[1]: [0] * (end_year - start_year),
+                            config_list[2]: [0] * (end_year - start_year),
+                            config_list[3]: [0] * (end_year - start_year),
+                            config_list[4]: [0] * (end_year - start_year),
+                            config_list[5]: [0] * (end_year - start_year),
+                            config_list[6]: [0] * (end_year - start_year),
+                            config_list[7]: [0] * (end_year - start_year),
+                            config_list[8]: [0] * (end_year - start_year),
+                            config_list[9]: [0] * (end_year - start_year),
+                            config_list[10]: [0] * (end_year - start_year),
+                            config_list[11]: [0] * (end_year - start_year)})
+        df_new = df.set_index('year')
+        df_new['ship_type'] = ship_type_list[i]
+        df_merge = df_new if i == 0 else pd.concat([df_merge, df_new])
+    
+    return df_merge
+
+
 def show_stackplot(result, label, title, directory):
     fig = plt.figure(figsize=(20,10))
     cm=plt.get_cmap('tab20')
@@ -182,7 +236,34 @@ def show_stackplot(result, label, title, directory):
     fig.savefig(directory+'/'+title+'.png')
 
 
-def show_stacked_bar(result, label, title, directory):
+def plot_graph(data, x, y, hue, ylabel, title):
+    fig = plt.figure(figsize=(12, 6))
+    sns.barplot(x=x, y=y, hue=hue, data=data, ci=None, estimator=sum)
+    plt.xlabel('Year')
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    st.pyplot(fig)
+    # fig.savefig(directory + '/' + title + '.png')
+
+
+def plot_graph_stack(data, x, y_list, ylabel_list, ylabel_total, title):
+    fig = plt.figure(figsize=(12, 6))
+    cm = plt.get_cmap('tab20')
+    for i, y_each in range(y_list):
+        sns.barplot(x=x, y=y_each, data=data, color=cm(i), label=ylabel_list(i), ci=None)
+
+    plt.xlabel('Year')
+    plt.ylabel(ylabel_total)
+    plt.title(title)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    st.pyplot(fig)
+    # fig.savefig(directory + '/' + title + '.png')
+
+
+def show_stacked_bar(result, label, title, directory, cmap = None):
     fig = plt.figure(figsize=(20, 10))
     cm = plt.get_cmap('tab20')
     ax1 = fig.add_subplot(1, 1, 1)
@@ -190,15 +271,23 @@ def show_stacked_bar(result, label, title, directory):
     # 各データセットを積み上げ棒グラフとして描画
     bottom = None
     for i, s in enumerate(label):
-        ax1.bar(result.index, result[s], label=s, bottom=bottom, color=cm(i))
+        if cmap == 'config':
+            ax1.bar(result['year'], result[s], label=s, bottom=bottom, color=custom_cmap(i))
+        elif cmap == 'crew':
+            ax1.bar(result['year'], result[s], label=s, bottom=bottom, color=custom_cmap_crew(i))
+        else:
+            ax1.bar(result['year'], result[s], label=s, bottom=bottom, color=cm(i))
+            
         if bottom is None:
             bottom = result[s]
         else:
             bottom += result[s]
 
+    # plt.ylim(0, max_y_value)
+
     ax1.set_title(title)
     ax1.legend(loc='upper left')
-    plt.xticks(result.index, rotation=45)
+    plt.xticks(result['year'], rotation=45)
     plt.tight_layout()
     st.pyplot(fig)
     fig.savefig(directory + '/' + title + '.png')
@@ -235,6 +324,10 @@ def show_linechart_two(x, y1, y2, label, title, directory):
     ax.set_ylabel(label)
     ax.set_title(title)
     ax.legend(loc='upper left')
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([int(label) for label in x])
+
     st.pyplot(fig)
     fig.savefig(directory+'/'+title+'.png')
 
@@ -248,6 +341,10 @@ def show_linechart_three(x, y1, y2, y3, label, title, directory, legend_pos):
     ax.set_ylabel(label)
     ax.set_title(title)
     ax.legend(loc=legend_pos)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([int(label) for label in x])
+    
     st.pyplot(fig)
     fig.savefig(directory+'/'+title+'.png')
 
@@ -342,11 +439,11 @@ def show_tradespace_for_multiple_color(a, b, alabel, blabel, title, control_case
     if y_int:
         plt.gca().get_yaxis().set_major_locator(ticker.MaxNLocator(integer=True))
     
-    texts = []
-    # for j, case in enumerate(cases):
+    # texts = []
+    # for j, case in enumerate(control_cases):
     #     # text = plt.annotate(case[0]+'_'+case[1]+'_'+case[2]+'_'+case[3], (a[j], b[j]))
-    #     text = plt.annotate(case, (a[j], b[j]))
+    #     text = plt.annotate(case, (a[uncertainty_cases*j], b[uncertainty_cases*j]))
     #     texts.append(text)
     # adjust_text(texts, arrowprops=dict(arrowstyle='-', color='gray', lw=0.5))
-    fig.savefig(directory+'/'+title +'.png')
+    fig.savefig(directory+'/'+title +'.png', bbox_inches='tight')
     plt.close()
