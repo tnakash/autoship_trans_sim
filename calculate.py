@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import warnings
 
+scaling_factor = 10 # Assume 10% of ships
+
 warnings.simplefilter('ignore', FutureWarning)
 
 def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi, config_list, fuel_rate, crew_cost_rate, insurance_rate, ship_per_scccrew):
@@ -138,7 +140,7 @@ def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi, config_list, fuel
             SCC_Personal[i] += cost['AddCost']['SCC_Personal'] * 0.5 * (3. / ship_per_scccrew)
             acc_ratio_navi[i] = acc_navi_semi  # Tentativeな例外処理
             fuel_cost_AE[i] -= cost['VOYEX']['fuel_cost_AE'] * fuel_rate * AE_crew_rate * num_crew_navi/num_crew_all * 0.5 * trl_rate(tech.TRL[1]+TRLgap_semi)
-            insurance_cost[i] -= cost['OPEX']['insurance_cost'] * (acc_ratio_navi[i] /tech.accident_ratio_ini[1]) * insurance_rate
+            # insurance_cost[i] -= cost['OPEX']['insurance_cost'] * (acc_ratio_navi[i] /tech.accident_ratio_ini[1]) * insurance_rate
             if insurance_rate > 0:
                 insurance_cost[i] -= cost['OPEX']['insurance_cost'] * (acc_ratio_navi[i] /tech.accident_ratio_ini[1]) * insurance_rate
             
@@ -157,7 +159,7 @@ def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi, config_list, fuel
                 insurance_cost[i] -= cost['OPEX']['insurance_cost'] * (acc_ratio_navi[i] /tech.accident_ratio_ini[1]) * insurance_rate
         
         if Moni[i] == 1:
-            crew_cost[i] -= cost['OPEX']['crew_cost'] * moni_crew_factor * crew_cost_rate
+            crew_cost[i] -= cost['OPEX']['crew_cost'] * moni_crew_factor * crew_cost_rate * trl_rate(tech.TRL[2])
             maintenance_cost[i] -= mainte_amount * num_crew_moni/num_crew_all * trl_rate(tech.TRL[2])
             material_cost[i] -= cost['CAPEX']['material_cost'] * accom_reduce_moni * trl_rate(tech.TRL[2])
             integrate_cost[i] -= cost['CAPEX']['integrate_cost'] * accom_reduce_moni * trl_rate(tech.TRL[2])
@@ -169,12 +171,9 @@ def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi, config_list, fuel
             fuel_cost_AE[i] -= cost['VOYEX']['fuel_cost_AE'] * fuel_rate * AE_crew_rate * num_crew_moni/num_crew_all * trl_rate(tech.TRL[2])
             if insurance_rate > 0:
                 insurance_cost[i] -= cost['OPEX']['insurance_cost'] * (acc_ratio_moni[i] /tech.accident_ratio_ini[2]) * insurance_rate
-            else:
-                insurance_cost[i] -= cost['OPEX']['insurance_cost'] * insurance_rate # TBD
-            
-        
-        
-        
+            # else:
+            #     insurance_cost[i] -= cost['OPEX']['insurance_cost'] * insurance_rate # TBD
+
         
         if Navi[i] == 2 and Moni[i] == 1:  # Berthing not considered
             crew_cost[i] -= cost['OPEX']['crew_cost'] * cook_crew_factor * crew_cost_rate
@@ -279,14 +278,14 @@ def get_tech_ini(tech_yml, uncertainty, trl_b = 0, trl_n = 0, trl_m = 0):
     return tech_df, param
 
 def calculate_tech(tech, ship_fleet, share_rate_O, share_rate_M, current_year):
-    tech.loc[0, ["Oexp"]] += (ship_fleet['berthing'] == 1).sum() * share_rate_O
-    tech.loc[0, ["Mexp"]] += ((ship_fleet['berthing'] == 1) & (ship_fleet['year'] == current_year)).sum() * share_rate_M
-    tech.loc[1, ["Oexp"]] += (ship_fleet['navigation'] == 1).sum() * 0.5 * share_rate_O
-    tech.loc[1, ["Mexp"]] += ((ship_fleet['navigation'] == 1) & (ship_fleet['year'] == current_year)).sum() * 0.5 * share_rate_M
-    tech.loc[1, ["Oexp"]] += (ship_fleet['navigation'] == 2).sum() * share_rate_O
-    tech.loc[1, ["Mexp"]] += ((ship_fleet['navigation'] == 2) & (ship_fleet['year'] == current_year)).sum() * share_rate_M
-    tech.loc[2, ["Oexp"]] += (ship_fleet['monitoring'] == 1).sum() * share_rate_O
-    tech.loc[2, ["Mexp"]] += ((ship_fleet['monitoring'] == 1) & (ship_fleet['year'] == current_year)).sum() * share_rate_M
+    tech.loc[0, ["Oexp"]] += ((ship_fleet['berthing'] == 1) & (ship_fleet['year'] == current_year) & (ship_fleet['is_operational'] == True)).sum() * share_rate_O * scaling_factor
+    tech.loc[0, ["Mexp"]] += ((ship_fleet['berthing'] == 1) & (ship_fleet['year'] == current_year) & (ship_fleet['year_built'] == current_year)).sum() * share_rate_M * scaling_factor
+    tech.loc[1, ["Oexp"]] += ((ship_fleet['navigation'] == 1) & (ship_fleet['year'] == current_year) & (ship_fleet['is_operational'] == True)).sum() * 0.5 * share_rate_O * scaling_factor
+    tech.loc[1, ["Mexp"]] += ((ship_fleet['navigation'] == 1) & (ship_fleet['year'] == current_year) & (ship_fleet['year_built'] == current_year)).sum() * 0.5 * share_rate_M * scaling_factor
+    tech.loc[1, ["Oexp"]] += ((ship_fleet['navigation'] == 2) & (ship_fleet['year'] == current_year) & (ship_fleet['is_operational'] == True)).sum() * share_rate_O * scaling_factor
+    tech.loc[1, ["Mexp"]] += ((ship_fleet['navigation'] == 2) & (ship_fleet['year'] == current_year) & (ship_fleet['year_built'] == current_year)).sum() * share_rate_M * scaling_factor
+    tech.loc[2, ["Oexp"]] += ((ship_fleet['monitoring'] == 1) & (ship_fleet['year'] == current_year) & (ship_fleet['is_operational'] == True)).sum() * share_rate_O * scaling_factor
+    tech.loc[2, ["Mexp"]] += ((ship_fleet['monitoring'] == 1) & (ship_fleet['year'] == current_year) & (ship_fleet['year_built'] == current_year)).sum() * share_rate_M * scaling_factor
 
     return tech
 
@@ -340,7 +339,9 @@ def calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, O
 
     if Oexp_to_safety_loop:
         acc_navi_semi = tech.accident_ratio_ini[1] * (1 - param.acc_reduction_full * trl_rate(tech.TRL[1]+3) / 2) * (tech.Oexp[1]+1) ** (-param.ope_safety_b)
+        # acc_navi_semi = tech.accident_ratio_ini[1] * (1 - param.acc_reduction_full * trl_rate(tech.TRL[1]+3)) * (tech.Oexp[1]+1) ** (-param.ope_safety_b)
     else:
         acc_navi_semi = tech.accident_ratio_ini[1] * (1 - param.acc_reduction_full * trl_rate(tech.TRL[1]+3) / 2)                                                                                                                                                                            
+        # acc_navi_semi = tech.accident_ratio_ini[1] * (1 - param.acc_reduction_full * trl_rate(tech.TRL[1]+3))                                                                                                                                                                            
 
     return tech, acc_navi_semi

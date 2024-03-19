@@ -246,7 +246,7 @@ class PolicyMaker():
         self.sub_select = 0
         self.sub_used = 0
         self.sub_per_ship = 0
-        self.sub_Experience = sub_Experience
+        self.sub_Experience = sub_Experience # / 3.0
         self.trial_times = trial_times
 
     def subsidize_investment(self, investor):
@@ -262,6 +262,6 @@ class PolicyMaker():
     def subsidize_experience(self, tech, TRLreg):
         for i in range(len(tech.TRL)):
             if tech.TRL[i] < TRLreg:
-                tech.loc[i, ["Mexp"]] += self.sub_Experience / (tech.tech_cost[i] * self.trial_times)
-                tech.loc[i, ["Oexp"]] += self.sub_Experience / (tech.tech_cost[i] * self.trial_times)
+                tech.loc[i, ["Mexp"]] += self.sub_Experience / (tech.tech_cost[i] * self.trial_times) / 3 # 3 is the number of technologies
+                tech.loc[i, ["Oexp"]] += self.sub_Experience / (tech.tech_cost[i] * self.trial_times) / 3
                 self.sub_used += self.sub_Experience

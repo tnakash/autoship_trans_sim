@@ -11,7 +11,7 @@ import seaborn as sns
 
 # カスタムカラーマップの定義
 cmap_colors = [
-    (0.9, 0.9, 0.9),   # NONE - 薄いグレー
+    (0.7, 0.7, 0.7),   # NONE - 薄いグレー
     (1, 0, 0),         # B - 赤
     (0, 0.9, 1),       # N1 - 薄い青
     (0, 0.5, 1),       # N2 - 濃い青
@@ -54,23 +54,23 @@ def show_tradespace_general(a, b, alabel, blabel, title, list, selected_index, d
     fig.savefig(directory + '/' + title + '.png')
 
 
-def show_tradespace_for_multiple(a, b, alabel, blabel, title, list, directory, x_int=False, y_int=False):
-    fig = plt.figure(figsize=(15,15))
-    plt.scatter(x=a,y=b)
-    plt.title(title)
-    plt.xlabel(alabel)
-    plt.ylabel(blabel)
-    if x_int:
-        plt.gca().get_xaxis().set_major_locator(ticker.MaxNLocator(integer=True))
-    if y_int:
-        plt.gca().get_yaxis().set_major_locator(ticker.MaxNLocator(integer=True))
+# def show_tradespace_for_multiple(a, b, alabel, blabel, title, list, directory, x_int=False, y_int=False):
+#     fig = plt.figure(figsize=(15,15))
+#     plt.scatter(x=a,y=b)
+#     plt.title(title)
+#     plt.xlabel(alabel)
+#     plt.ylabel(blabel)
+#     if x_int:
+#         plt.gca().get_xaxis().set_major_locator(ticker.MaxNLocator(integer=True))
+#     if y_int:
+#         plt.gca().get_yaxis().set_major_locator(ticker.MaxNLocator(integer=True))
 
-    texts = []
-    for j, label in enumerate(list):
-        text = plt.annotate(label, (a[j], b[j]))
-        texts.append(text)
-    adjust_text(texts, arrowprops=dict(arrowstyle='-', color='gray', lw=0.5))
-    fig.savefig(directory+'/'+title+'.png')
+#     texts = []
+#     for j, label in enumerate(list):
+#         text = plt.annotate(label, (a[j], b[j]))
+#         texts.append(text)
+#     adjust_text(texts, arrowprops=dict(arrowstyle='-', color='gray', lw=0.5))
+#     fig.savefig(directory+'/'+title+'.png')
 
 
 def show_tradespace_for_multiple_color_old(a, b, alabel, blabel, title, cases, k, color, directory, x_int=False, y_int=False):
@@ -230,8 +230,8 @@ def show_stackplot(result, label, title, directory):
     cm=plt.get_cmap('tab20')
     ax1 = fig.add_subplot(1, 1, 1)
     ax1.stackplot(result.index, [result[s] for s in label], labels=label, colors= [cm(i) for i in range(12)]) #, color=a, cmap=cm) #, color=color_maps)
-    ax1.set_title(title)
-    ax1.legend(loc='upper left')
+    ax1.set_title(title, fontsize=16)
+    ax1.legend(loc='upper left', fontsize=16)
     st.pyplot(fig)
     fig.savefig(directory+'/'+title+'.png')
 
@@ -239,9 +239,9 @@ def show_stackplot(result, label, title, directory):
 def plot_graph(data, x, y, hue, ylabel, title):
     fig = plt.figure(figsize=(12, 6))
     sns.barplot(x=x, y=y, hue=hue, data=data, ci=None, estimator=sum)
-    plt.xlabel('Year')
-    plt.ylabel(ylabel)
-    plt.title(title)
+    plt.xlabel('Year', fontsize=16)
+    plt.ylabel(ylabel, fontsize=16)
+    plt.title(title, fontsize=16)
     plt.xticks(rotation=45)
     plt.tight_layout()
     st.pyplot(fig)
@@ -254,10 +254,10 @@ def plot_graph_stack(data, x, y_list, ylabel_list, ylabel_total, title):
     for i, y_each in range(y_list):
         sns.barplot(x=x, y=y_each, data=data, color=cm(i), label=ylabel_list(i), ci=None)
 
-    plt.xlabel('Year')
-    plt.ylabel(ylabel_total)
-    plt.title(title)
-    plt.xticks(rotation=45)
+    plt.xlabel('Year', fontsize=16)
+    plt.ylabel(ylabel_total, fontsize=16)
+    plt.title(title, fontsize=16)
+    plt.xticks(rotation=45, fontsize=16)
     plt.tight_layout()
     st.pyplot(fig)
     # fig.savefig(directory + '/' + title + '.png')
@@ -285,10 +285,11 @@ def show_stacked_bar(result, label, title, directory, cmap = None):
 
     # plt.ylim(0, max_y_value)
 
-    ax1.set_title(title)
-    ax1.legend(loc='upper left')
+    ax1.set_title(title, fontsize=16)
+    ax1.legend(loc='upper left', fontsize=16)
     plt.xticks(result['year'], rotation=45)
     plt.tight_layout()
+    plt.tick_params(labelsize=16)
     st.pyplot(fig)
     fig.savefig(directory + '/' + title + '.png')
 
@@ -299,8 +300,8 @@ def show_barchart(result, label, title, directory):
     for i in range(len(label)):
         ax1.bar(result.index, result[label[i]], bottom=result[label[:i]].sum())
 
-    ax1.set_title(title)
-    ax1.legend(loc='upper left')
+    ax1.set_title(title, fontsize=16)
+    ax1.legend(loc='upper left', fontsize=16)
     st.pyplot(fig)
     fig.savefig(directory+'/'+title+'.png')
 
@@ -309,9 +310,9 @@ def show_linechart(x, y, label, title, directory):
     fig = plt.figure(figsize=(20,10))
     ax1 = fig.add_subplot(1, 1, 1)
     ax1.plot(x, y)
-    ax1.set_ylabel(label)
-    ax1.set_title(title)
-    ax1.legend(loc='upper left')
+    ax1.set_ylabel(label, fontsize=16)
+    ax1.set_title(title, fontsize=16)
+    ax1.legend(loc='upper left', fontsize=16)
     st.pyplot(fig)
     fig.savefig(directory+'/'+title+'.png')
 
@@ -430,10 +431,10 @@ def show_tradespace_for_multiple_color(a, b, alabel, blabel, title, control_case
                     y=b[uncertainty_cases*i:uncertainty_cases*(i + 1)], 
                     c=[cm(i)], label=case)
         
-    plt.title(title)
-    plt.xlabel(alabel)
-    plt.ylabel(blabel)
-    plt.legend(bbox_to_anchor=(1.01, 1), loc='upper left')
+    plt.title(title, fontsize=16)
+    plt.xlabel(alabel, fontsize=16)
+    plt.ylabel(blabel, fontsize=16)
+    plt.legend(bbox_to_anchor=(1.01, 1), loc='upper left', fontsize=16)
     if x_int:
         plt.gca().get_xaxis().set_major_locator(ticker.MaxNLocator(integer=True))
     if y_int:

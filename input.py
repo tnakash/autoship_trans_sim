@@ -24,7 +24,7 @@ def get_yml(filename):
     return dic_yml
 
 # Set scenario by yaml
-def get_scenario(scenario, ship_types):
+def get_scenario(scenario, ship_types, fleet_type):
     # column = ['Year', 'NumofShip', 'Newbuilding', 'Scrap']
     start_year = scenario['sim_setting']['start_year']
     end_year = scenario['sim_setting']['end_year']
@@ -50,7 +50,7 @@ def get_scenario(scenario, ship_types):
         for i in range (sim_years):
             if i == 0:
                 NumofShip[h][i] = ship_initial[h]
-            elif i > 10: # To Be Deleted
+            elif i > 10 and fleet_type == 'domestic': # To Be Deleted
                 NumofShip[h][i] = NumofShip[h][i-1]
             else:
                 NumofShip[h][i] = int(NumofShip[h][i-1] * annual_growth[h]) + random.randint(-UNCERTAINTY,UNCERTAINTY)
@@ -81,15 +81,23 @@ def get_scenario(scenario, ship_types):
 
     return current_fleet, num_newbuilding, ship_age, ship_size
 
-def set_scenario(start_year, end_year, annual_growth, ship_age, economy, safety, estimated_loss, subsidy_randd, subsidy_adoption, TRL_regulation, Manu_loop, Ope_loop_TRL, Ope_loop_Safety):
+
+def set_scenario(start_year, end_year, annual_growth, ship_age, economy, safety, estimated_loss, subsidy_randd, subsidy_adoption, TRL_regulation, Manu_loop, Ope_loop_TRL, Ope_loop_Safety, fleet_type):
     # with open(homedir + "yml/scenario/scenario_"+casename+".yml", "w") as yf: # Google Colab用に変更
-    ships_data = [
-        {"ship_size": 99, "ship_age": ship_age, "initial_number": 181, "annual_growth": annual_growth[0]}, # 1810
-        {"ship_size": 199, "ship_age": ship_age, "initial_number": 62, "annual_growth": annual_growth[1]}, # 623
-        {"ship_size": 499, "ship_age": ship_age, "initial_number": 163, "annual_growth": annual_growth[2]}, #1625
-        {"ship_size": 749, "ship_age": ship_age, "initial_number": 61, "annual_growth": annual_growth[3]}, # 611
-        {"ship_size": 3000, "ship_age": ship_age, "initial_number": 54, "annual_growth": annual_growth[4]} # 543
-        ]
+
+    if fleet_type == 'domestic':
+        ships_data = [
+            {"ship_size": 99, "ship_age": ship_age, "initial_number": 181, "annual_growth": annual_growth[0]}, # 1810
+            {"ship_size": 199, "ship_age": ship_age, "initial_number": 62, "annual_growth": annual_growth[1]}, # 623
+            {"ship_size": 499, "ship_age": ship_age, "initial_number": 163, "annual_growth": annual_growth[2]}, #1625
+            {"ship_size": 749, "ship_age": ship_age, "initial_number": 61, "annual_growth": annual_growth[3]}, # 611
+            {"ship_size": 3000, "ship_age": ship_age, "initial_number": 54, "annual_growth": annual_growth[4]} # 543
+            ]
+    elif fleet_type == 'international':
+        ships_data = [
+            {"ship_size": 80000, "ship_age": ship_age, "initial_number": 1000, "annual_growth": annual_growth[0]},
+            ]
+
     ships_dict = {}
     for i, ship_data in enumerate(ships_data, start=1):
         ships_dict[f"ship_{i}"] = ship_data

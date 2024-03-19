@@ -12,7 +12,7 @@ from calculate import calculate_cost, calculate_tech, calculate_TRL_cost, get_te
 from input import get_scenario, get_yml, set_scenario, set_tech
 from output import show_tradespace_for_multiple_color, show_tradespace_for_multiple_color_notext, make_dataframe_for_output
 
-sim_name = '231128'
+sim_name = '240222'
 DIR = 'result/'+'multiple/'+sim_name
 if not os.path.exists(DIR):
     os.makedirs(DIR)
@@ -39,6 +39,7 @@ def multiple_run():
     '''
     Settings
     '''    
+    fleet_type = 'domestic'
     start_year, end_year = 2022, 2040
     ship_age = 25
     dt_year = 50
@@ -75,9 +76,9 @@ def multiple_run():
     
     ship_growth = 1.072 #0.99
     growth_scenario = ('Average', 'Small', 'Large')
-    TRL_Berth_list = (2,3) #(1.5, 2, 2.5) #, 3)
-    TRL_Navi_list = (2,3) #(1.5, 2, 2.5) #, 3)
-    TRL_Moni_list = (2,3) #(1.5, 2, 2.5) #, 3)
+    TRL_Berth_list = (2,) #3) #(1.5, 2, 2.5) #, 3)
+    TRL_Navi_list = (2,) #3) #(1.5, 2, 2.5) #, 3)
+    TRL_Moni_list = (2,) # 3) #(1.5, 2, 2.5) #, 3)
     crew_cost_list = (1.0, 1.5, 2.0) #1.5, 2.0)
     ope_TRL_factor_list = (1000, 10000)
 
@@ -125,10 +126,7 @@ def multiple_run():
     
     casename = []
     casetype = []
-    # sub_type = []
-    # reg_type = []
-    # inv_type = []
-    # ope_type = []
+
     for num, case in enumerate(cases):
         print(case)
         if monte_carlo == 1:            
@@ -140,7 +138,7 @@ def multiple_run():
         safety = 1 # 1 if case[3] == 'Safety' else 0.1
         invest_tech = 'All' # case[2]
         share_rate_O = 0.01 if case[2] == 'Close' else 1.0
-        insurance_rate = 0.0 if case[3] == 'Asis' else 1.0 if case[3] == 'Considered' else -10.0 if case[3] == 'Resist' else 2.0
+        insurance_rate = 0.0 if case[3] == 'Asis' else 1.0 if case[3] == 'Considered' else 0.0 if case[3] == 'Resist' else 2.0
 
         subsidy_RandD = 5000000 if case[0] == 'R&D' else 4000000
         subsidy_Adoption = 1000000 if case[0] == 'Ado' else 0
@@ -161,12 +159,12 @@ def multiple_run():
             crew_cost_rate = case[8]
             ope_TRL_factor = case[9]
         else:
-            TRL_Berth = rd.uniform(1,3) * 10000000
-            TRL_Navi = rd.uniform(1,3) * 10000000
-            TRL_Moni = rd.uniform(1,3) * 10000000
+            TRL_Berth = rd.uniform(2,3) * 10000000
+            TRL_Navi = rd.uniform(2,3) * 10000000
+            TRL_Moni = rd.uniform(2,3) * 10000000
             crew_cost_rate = rd.uniform(1,2)
             ope_TRL_factor = 10 ** (rd.uniform(3,4))
-            ship_per_scccrew = rd.randint(1,7)
+            # ship_per_scccrew = rd.randint(1,7)
 
         # TBD
         if case[4] == 'Small':
@@ -180,9 +178,9 @@ def multiple_run():
         set_scenario(
             start_year, end_year, numship_growth_list, ship_age, 
             economy, safety, estimated_loss, subsidy_RandD, subsidy_Adoption, TRLreg, 
-            Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
+            Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop, fleet_type)
         scenario_yml = get_yml('scenario')
-        current_fleet, num_newbuilding, ship_age_list, ship_size_list  = get_scenario(scenario_yml, ship_types)
+        current_fleet, num_newbuilding, ship_age_list, ship_size_list  = get_scenario(scenario_yml, ship_types, fleet_type)
 
         Owner = ShipOwner('Owner', economy, safety, current_fleet, num_newbuilding, estimated_loss)
         Manufacturer = Investor()
