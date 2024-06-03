@@ -3,6 +3,7 @@ import glob
 import os
 import random
 import zipfile
+import yaml
 
 import pandas as pd
 import streamlit as st
@@ -10,24 +11,13 @@ from PIL import Image
 
 from Agent import Investor, PolicyMaker, ShipOwner
 from calculate import calculate_cost, calculate_tech, calculate_TRL_cost, get_tech_ini
-from input import get_scenario, get_yml, set_scenario, set_tech
+from input import get_scenario, get_yml, set_scenario, set_tech, save_uploaded_file
 from output import (
     show_linechart_three,
-    show_linechart_two,
-    show_stackplot,
-    show_tradespace_anime,
     show_tradespace_general,
     show_stacked_bar,
-    make_dataframe_for_output,
-    make_dataframe_for_output_multiple,
-    plot_graph,
-    plot_graph_stack
+    process_ship_data,
 )
-
-'''
-Global variables
-'''
-SCALING_FACTOR = 10 # To save the simulation time, reduce the number of ship and people to 1/SCALING_FACTOR
 
 '''
 Setting lists
@@ -47,62 +37,11 @@ cost_list = [
     'AddCost'
     ]
 
-opex_list = [
-    'crew_cost', 
-    'store_cost', 
-    'maintenance_cost', 
-    'insurance_cost', 
-    'general_cost', 
-    'dock_cost'
-    ]
-
-capex_list = [
-    'material_cost',
-    'integrate_cost',
-    'add_eq_cost'
-    ]
-
-voyex_list = [
-    'port_call',
-    'fuel_cost_ME',
-    'fuel_cost_AE'
-    ]
-
-addcost_list = [
-    'SCC_Capex',
-    'SCC_Opex',
-    'SCC_Personal',
-    'Mnt_in_port'
-    ]
-
-cost_detail_list = opex_list + capex_list + voyex_list + addcost_list 
-
 accident_list = [
     'accident_berth', 
     'accident_navi', 
     'accident_moni'
     ]
-
-config_list = [
-    'NONE',
-    'B',
-    'N1',
-    'N2',
-    'M',
-    'BN1',
-    'BN2',
-    'BM',
-    'N1M',
-    'N2M',
-    'BN1M',
-    'FULL'
-    ]
-
-# tech_list = [
-    # 'berthing', 
-    # 'navigation', 
-    # 'monitoring'
-    # ]
 
 '''
 Main Function with Streamlit UI
@@ -122,30 +61,30 @@ def main():
 
     start_year, end_year = st.slider('Simulation Year', 2020, 2070, (2023, 2050))
     numship_growth = st.slider('Annual growth rate of ship demand[-]', 0.900, 1.100, 1.01) # 1.072 for Average
+    scaling_factor = st.slider('To save the simulation time, reduce the number of ship and people to 1/X', 1, 10, 1)
 
     if fleet_type == 'domestic':
         growth_scenario = st.selectbox('Scenario for Growth (assume double in 10 yrs)', ('Average', 'Small', 'Large'))
         numship_growth = 1.072 if growth_scenario == 'Average' else numship_growth
-        ship_types = ['ship_1', 'ship_2', 'ship_3', 'ship_4', 'ship_5']
-        cost_types = ['cost_99', 'cost_199', 'cost_499', 'cost_749', 'cost_3000']
+        fleet_yml = get_yml('fleet_domestic')
     elif fleet_type == 'international':
         growth_scenario = 'Average'
-        ship_types = ['ship_1']
-        cost_types = ['cost_80000']
+        fleet_yml = get_yml('fleet_international')
 
-    dt_year = 50  # st.slider('Interval for Reset parameters[year]', 1, 50, 50)
-    ship_age = 25  # st.slider('Average Ship Lifeyear', 20, 30, 25)
+    ship_types = list(fleet_yml)
+    cost_types = [f'cost_{fleet_yml[ship]["ship_size"]}' for ship in fleet_yml]
+
+    # dt_year = end_year - start_year + 1
+    ship_age = st.slider('Average Ship Lifeyear', 20, 30, 25)
     ship_per_scccrew = st.slider('Number of ships for one SCC operator', 1, 12, 3)
 
     st.write('1.2 Additional Setting')
     Mexp_to_production_loop = st.checkbox('Include effect of Manufacturing experience to Production cost', value = True)
     Oexp_to_TRL_loop = st.checkbox('Include effect of Operational experience to TRL', value = True)
     Oexp_to_safety_loop = st.checkbox('Include effect of Operational experience to Safety', value = True)
-    
-    ope_safety_b = st.slider('Accident reduction ratio b (y = ax**(-b))', 0.0, 1.0, 0.2)
-    ope_TRL_factor = st.number_input('Operational experience R&D value (USD/times)', value = 10000)
-    
-    animation = st.checkbox('Output animation', value = False)
+        
+    show_tradespace = st.checkbox('Show Tradespace', value = False)
+    tradespace_interval = 10
     uncertainty = True # st.checkbox('Set Uncertainty', value = False)
     fuel_rate = st.slider('Fuel rate (times)', 0, 5, 1)
         
@@ -181,7 +120,15 @@ def main():
     subsidy_Experience = st.sidebar.number_input('Subsidy Amount for Prototyping [USD/year]', value = 0)
     trial_times = 1  # number of trials for getting one experience
     TRLreg = st.sidebar.selectbox('TRL regulation (minimum TRL for deployment)', (8, 7))
-    
+
+    # uploaded_file = st.file_uploader("upload YAML file", type="yaml")
+    # if uploaded_file is not None:
+    #     save_folder = "yml/"
+    #     if not os.path.exists(save_folder):
+    #         os.makedirs(save_folder)
+    #     file_path = save_uploaded_file(uploaded_file, save_folder)
+    #     st.success(f"save YAML file: {file_path}")
+
     if growth_scenario == 'Small':
         numship_growth_list = [1.145, 1.145, 1.145, 1., 1.]
     elif growth_scenario == 'Large':
@@ -191,19 +138,18 @@ def main():
     
     # Set scenario and cost, ship, spec, tech parameters
     set_scenario(
-        start_year, end_year, numship_growth_list, ship_age, 
+        start_year, end_year, 
         economy, safety, estimated_loss, subsidy_RandD, subsidy_Adoption, TRLreg, 
-        Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop, fleet_type)
+        Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
+
     scenario_yml = get_yml('scenario')
 
     # Fleet Lists
-    current_fleet, num_newbuilding, ship_age_list, ship_size_list = get_scenario(scenario_yml, ship_types, fleet_type)
+    current_fleet, num_newbuilding, ship_age_list, ship_size_list = get_scenario(scenario_yml, fleet_yml, ship_types, fleet_type)
 
-    # Set parameters (cost, tech and ship spec)
-    set_tech(ope_safety_b, ope_TRL_factor)
-        
     tech_yml = get_yml('tech')
     ship_spec_yml = get_yml('ship_spec')
+    config_list = list(ship_spec_yml)
     tech, param = get_tech_ini(tech_yml, uncertainty, TRL_Berth, TRL_Navi, TRL_Moni)
     select_index = []
 
@@ -237,17 +183,16 @@ def main():
         if st.session_state['Year'] == start_year:
             st.write("Simulation Started!")
         else:
-            # Read temporary saved parameters
             spec = pd.read_csv('csv/spec_'+casename+'.csv', index_col=0)
             Owner.fleet = pd.read_csv('csv/fleet_'+casename+'.csv', index_col=0)
             tech_accum = pd.read_csv('csv/tech_'+casename+'.csv', index_col=0)
             tech = tech_accum[-(len(tech_yml)-1):].drop('year', axis=1)
         
         sim_year=st.session_state.Year
-        st.write('Simulation from '+str(sim_year)+' to '+str(min(end_year,sim_year+dt_year-1)))         
-        
+        st.write('Simulation from '+str(sim_year)+' to '+str(end_year))
+
         # Annual iteration
-        for i in range(sim_year-start_year, min(end_year-start_year+1,sim_year-start_year+dt_year), 1):    
+        for i in range(sim_year-start_year, end_year-start_year+1, 1):    
             Manufacturer.reset(invest_tech,invest_amount)
             Regulator.reset(subsidy_RandD, subsidy_Adoption, subsidy_Experience, trial_times) 
             if i > 0:
@@ -260,7 +205,7 @@ def main():
             tech = Manufacturer.invest(tech, Regulator)
             
             # World (Technology Development)
-            tech = calculate_tech(tech, Owner.fleet, share_rate_O, share_rate_M, start_year+i-1)
+            tech = calculate_tech(tech, Owner.fleet, share_rate_O, share_rate_M, start_year+i-1, scaling_factor)
             tech, acc_navi_semi = calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
             
             spec_current = [''] * len(cost_types)
@@ -269,36 +214,25 @@ def main():
             for j in range(len(ship_types)):
                 # World (Cost Reduction and Safety Improvement)
                 spec_current[j]= calculate_cost(ship_spec_yml, cost_yml[j], start_year+i, tech, acc_navi_semi, config_list, fuel_rate, crew_cost_rate, insurance_rate, ship_per_scccrew)
-            
                 # Ship Owner (Adoption and Purchase)
                 select = Owner.select_ship(spec_current[j], tech, TRLreg)
                 Owner.purchase_ship(config_list, select, i, start_year, ship_size_list[j], ship_types[j])                
                 # Select the only one kind of ship at one year (TBD)
                 select_index.append(select)
-
                 # Regulator (Subsidy for Adoption)
                 if subsidy_Adoption > 0:
                     Regulator.select_for_sub_adoption(spec_current[j], tech, TRLreg)
                     Owner.purchase_ship_with_adoption(spec_current[j], config_list, select, tech, i, TRLreg, Regulator, start_year, ship_size_list[j])
-
                 # Ship Owner (Retrofit)
                 if retrofit:
                     Owner.select_retrofit_ship(spec_current[j], tech, TRLreg, ship_age_list[j], retrofit_cost, config_list, i, start_year, retrofit_limit, ship_size_list[j])
-
                 # Regulator (Grand Challenge)
                 if subsidy_Experience > 0:
                     Regulator.subsidize_experience(tech, TRLreg)
-
                 # Ship Owner (Scrap)
                 Owner.scrap_ship(ship_age_list[j], i, start_year)
-                
-                # # To Be Deleted
-                # for config in config_list:
-                #     fleet.at[start_year+i, config] = ((Owner.fleet['is_operational'] == True) & (Owner.fleet['config'] == config)).sum()
-                #     building.at[start_year+i, config] = ((Owner.fleet['year_built'] == start_year+i) & (Owner.fleet['config'] == config) & ((Owner.fleet['misc'] == 'newbuilt') | (Owner.fleet['misc'] == 'newbuilt_subsidized'))).sum()
-
                 # Show Tradespace
-                if (start_year+i)%10 == 0:
+                if show_tradespace and (start_year+i) % tradespace_interval == 0:
                     show_tradespace_general(spec_current[j].OPEX+spec_current[j].CAPEX+spec_current[j].VOYEX+spec_current[j].AddCost,
                                             spec_current[j].accident_berth+spec_current[j].accident_navi+spec_current[j].accident_moni, 
                                             "Total Cost(USD/year)", "Accident Ratio (-)", "Profitability vs Safety at "+str(start_year+i), 
@@ -313,22 +247,19 @@ def main():
                             'Select_ship': Regulator.sub_select, 'Subsidy_used': Regulator.sub_used, 
                             'Subsidy_per_ship': Regulator.sub_per_ship, 'All_investment': Manufacturer.invest_used}, index=[i+start_year])
                 subsidy_accum = subsidy_df if st.session_state['Year'] == start_year and i == 0 else pd.concat([subsidy_accum, subsidy_df])
-            
-            # # 1年ごとに吐き出す？
-            # Owner.fleet.to_csv(DIR+'/fleet_'+casename+'_'+str(start_year+i)+'.csv')
         
         for j in range(len(ship_types)):
             spec = spec_each[j] if j == 0 else pd.concat([spec, spec_each[j]])
         
         # proceed year
-        st.session_state.Year += dt_year
+        st.session_state.Year += end_year - start_year + 1 # dt_year
         
         merged_data = pd.merge(Owner.fleet, spec, on=['year', 'ship_type', 'config'], how='inner')
         
         grouped_data = merged_data.groupby(['year', 'config', 'ship_type']).agg({
             'ship_id': 'count',
             }).reset_index()
-        grouped_data['ship_id'] *= SCALING_FACTOR
+        grouped_data['ship_id'] *= scaling_factor
 
         # Reshape the data
         grouped_data_pivot = grouped_data.pivot_table(index=['year'], columns='config', values='ship_id', aggfunc='sum', fill_value=0)
@@ -341,60 +272,16 @@ def main():
         grouped_data_pivot.reset_index(drop=True, inplace=True)
         show_stacked_bar(grouped_data_pivot, config_list, "Number of Ships by Configuration [ship]", DIR_FIG, 'config')
  
+
         if fleet_type == 'domestic':
-            
-            grouped_data_ship_99 = grouped_data.query("ship_type == 'ship_1'").pivot_table(index=['year'], columns='config', values='ship_id', aggfunc='sum', fill_value=0)
-            missing_configs = set(config_list) - set(grouped_data_ship_99.columns)
-            for missing_config in missing_configs:
-                grouped_data_ship_99[missing_config] = 0
-            
-            grouped_data_ship_99.reset_index(inplace=True)
-            grouped_data_ship_99 = grouped_data_ship_99.rename(columns={'index': 'year'})
-            grouped_data_ship_99.reset_index(drop=True, inplace=True)
-            # plot_graph(grouped_data_ship_199, x='year', y='ship_id', hue='config', ylabel='Number of Ships', title='Number of Ships by Configuration (199GT Specified)') 
-            show_stacked_bar(grouped_data_ship_99, config_list, "Number of Ships by Configuration (99GT Specified) [ship]", DIR_FIG, 'config')
-                
-            # TBD
-            grouped_data_ship_199 = grouped_data.query("ship_type == 'ship_2'").pivot_table(index=['year'], columns='config', values='ship_id', aggfunc='sum', fill_value=0)
-            missing_configs = set(config_list) - set(grouped_data_ship_199.columns)
-            for missing_config in missing_configs:
-                grouped_data_ship_199[missing_config] = 0
-            
-            grouped_data_ship_199.reset_index(inplace=True)
-            grouped_data_ship_199 = grouped_data_ship_199.rename(columns={'index': 'year'})
-            grouped_data_ship_199.reset_index(drop=True, inplace=True)
-            # plot_graph(grouped_data_ship_199, x='year', y='ship_id', hue='config', ylabel='Number of Ships', title='Number of Ships by Configuration (199GT Specified)') 
-            show_stacked_bar(grouped_data_ship_199, config_list, "Number of Ships by Configuration (199GT Specified) [ship]", DIR_FIG, 'config')
-
-            # TBD
-            grouped_data_ship_749 = grouped_data.query("ship_type == 'ship_4'").pivot_table(index=['year'], columns='config', values='ship_id', aggfunc='sum', fill_value=0)
-            missing_configs = set(config_list) - set(grouped_data_ship_749.columns)
-            for missing_config in missing_configs:
-                grouped_data_ship_749[missing_config] = 0
-            
-            grouped_data_ship_749.reset_index(inplace=True)
-            grouped_data_ship_749 = grouped_data_ship_749.rename(columns={'index': 'year'})
-            grouped_data_ship_749.reset_index(drop=True, inplace=True)
-            # plot_graph(grouped_data_ship_749, x='year', y='ship_id', hue='config', ylabel='Number of Ships', title='Number of Ships by Configuration (749GT Specified)') 
-            show_stacked_bar(grouped_data_ship_749, config_list, "Number of Ships by Configuration (749GT Specified) [ship]", DIR_FIG, 'config')
-
-            # TBD
-            grouped_data_ship_3000 = grouped_data.query("ship_type == 'ship_5'").pivot_table(index=['year'], columns='config', values='ship_id', aggfunc='sum', fill_value=0)
-            missing_configs = set(config_list) - set(grouped_data_ship_3000.columns)
-            for missing_config in missing_configs:
-                grouped_data_ship_3000[missing_config] = 0
-            
-            grouped_data_ship_3000.reset_index(inplace=True)
-            grouped_data_ship_3000 = grouped_data_ship_3000.rename(columns={'index': 'year'})
-            grouped_data_ship_3000.reset_index(drop=True, inplace=True)
-            show_stacked_bar(grouped_data_ship_3000, config_list, "Number of Ships by Configuration (3000GT Specified) [ship]", DIR_FIG, 'config')
+            for ship_type, cost_type in zip(ship_types, cost_types):
+                process_ship_data(grouped_data, ship_type, config_list, cost_type, DIR_FIG)
 
         grouped_data_ship_type = grouped_data.pivot_table(index=['year'], columns='ship_type', values='ship_id', aggfunc='sum', fill_value=0)
         grouped_data_ship_type.reset_index(inplace=True)
         grouped_data_ship_type = grouped_data_ship_type.rename(columns={'index': 'year'})
         grouped_data_ship_type.reset_index(drop=True, inplace=True)
-        show_stacked_bar(grouped_data_ship_type, ship_types, "Number of Ships by Ship Type [ship]", DIR_FIG, 'ship_type') # TBD
-        # plot_graph(grouped_data, x='year', y='ship_id', hue='config', ylabel='Number of Ships', title='Number of Ships by Configuration') 
+        show_stacked_bar(grouped_data_ship_type, ship_types, "Number of Ships by Ship Type [ship]", DIR_FIG, 'ship_type')
                 
         summary = merged_data.groupby('year').agg({
             'CAPEX': 'sum',
@@ -415,7 +302,7 @@ def main():
              }).reset_index()
 
         summary_copy = summary.copy()
-        summary_copy.loc[:, summary_copy.columns != 'year'] *= SCALING_FACTOR
+        summary_copy.loc[:, summary_copy.columns != 'year'] *= scaling_factor
         show_stacked_bar(summary_copy, cost_list, "Total cost of fleet [USD]", DIR_FIG)
         show_stacked_bar(summary_copy, accident_list, "Number of Accidents", DIR_FIG)
         show_stacked_bar(summary_copy, crew_list, "Number of Seafarers [people]", DIR_FIG, 'crew')

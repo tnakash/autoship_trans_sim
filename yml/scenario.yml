@@ -10,12 +10,6 @@ Regulator:
   TRL_regulation: 8
   subsidy_adoption: 0
   subsidy_randd: 5000000
-Ship:
-  ship_1:
-    annual_growth: 1.01
-    initial_number: 1000
-    ship_age: 25
-    ship_size: 80000
 sim_setting:
   end_year: 2050
   start_year: 2023

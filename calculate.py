@@ -2,8 +2,6 @@ import numpy as np
 import pandas as pd
 import warnings
 
-scaling_factor = 10 # Assume 10% of ships
-
 warnings.simplefilter('ignore', FutureWarning)
 
 def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi, config_list, fuel_rate, crew_cost_rate, insurance_rate, ship_per_scccrew):
@@ -277,7 +275,7 @@ def get_tech_ini(tech_yml, uncertainty, trl_b = 0, trl_n = 0, trl_m = 0):
     
     return tech_df, param
 
-def calculate_tech(tech, ship_fleet, share_rate_O, share_rate_M, current_year):
+def calculate_tech(tech, ship_fleet, share_rate_O, share_rate_M, current_year, scaling_factor):
     tech.loc[0, ["Oexp"]] += ((ship_fleet['berthing'] == 1) & (ship_fleet['year'] == current_year) & (ship_fleet['is_operational'] == True)).sum() * share_rate_O * scaling_factor
     tech.loc[0, ["Mexp"]] += ((ship_fleet['berthing'] == 1) & (ship_fleet['year'] == current_year) & (ship_fleet['year_built'] == current_year)).sum() * share_rate_M * scaling_factor
     tech.loc[1, ["Oexp"]] += ((ship_fleet['navigation'] == 1) & (ship_fleet['year'] == current_year) & (ship_fleet['is_operational'] == True)).sum() * 0.5 * share_rate_O * scaling_factor
@@ -313,7 +311,7 @@ def calculate_tech(tech, ship_fleet, share_rate_O, share_rate_M, current_year):
 
 def calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop):
     TRL_need = [0] * 3
-    for i in range(3):
+    for i in range(len(TRL_need)):
         TRL_need[i] = param.rd_need_TRL[i]
         if Oexp_to_TRL_loop:
             if (tech.Oexp[i] * param.ope_TRL_factor + tech.Rexp[i] * param.rd_TRL_factor) - TRL_need[i] > 0 and tech.TRL[i] < 9:

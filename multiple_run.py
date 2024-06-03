@@ -8,9 +8,19 @@ import os
 import pandas as pd
 import random as rd
 from Agent import Investor, PolicyMaker, ShipOwner
-from calculate import calculate_cost, calculate_tech, calculate_TRL_cost, get_tech_ini
-from input import get_scenario, get_yml, set_scenario, set_tech
-from output import show_tradespace_for_multiple_color, show_tradespace_for_multiple_color_notext, make_dataframe_for_output
+from calculate import (
+    calculate_cost, 
+    calculate_tech, 
+    calculate_TRL_cost, 
+    get_tech_ini
+)
+from input import (
+    get_scenario, 
+    get_yml, 
+    set_scenario, 
+    set_tech
+)
+from output import show_tradespace_for_multiple_color
 
 sim_name = '240222'
 DIR = 'result/'+'multiple/'+sim_name
@@ -19,15 +29,7 @@ if not os.path.exists(DIR):
 
 crew_list = ['NaviCrew', 'EngiCrew', 'Steward']
 cost_list = ['OPEX', 'CAPEX', 'VOYEX', 'AddCost']
-opex_list = ['crew_cost', 'store_cost', 'maintenance_cost', 'insurance_cost', 'general_cost', 'dock_cost']
-capex_list = ['material_cost', 'integrate_cost', 'add_eq_cost']
-voyex_list = ['port_call', 'fuel_cost_ME', 'fuel_cost_AE']
-addcost_list = ['SCC_Capex', 'SCC_Opex', 'SCC_Personal', 'Mnt_in_port']
-cost_detail_list = opex_list + capex_list + voyex_list + addcost_list 
 accident_list = ['accident_berth', 'accident_navi', 'accident_moni']
-# config_list = ['config0', 'config1', 'config2', 'config3', 'config4', 'config5', 'config6', 'config7', 'config8', 'config9', 'config10', 'config11']
-config_list = ['NONE', 'B', 'N1', 'N2', 'M', 'BN1', 'BN2', 'BM', 'N1M', 'N2M', 'BN1M', 'FULL']
-# tech_list = ['berthing', 'navigation', 'monitoring']
 
 ship_types = ['ship_1', 'ship_2', 'ship_3', 'ship_4', 'ship_5']
 cost_types = ['cost_99', 'cost_199', 'cost_499', 'cost_749', 'cost_3000']
@@ -48,6 +50,7 @@ def multiple_run():
     estimated_loss = 25
     invest_amount = 5000000
     trial_times = 1
+    scaling_factor = 1
 
     Mexp_to_production_loop = True
     Oexp_to_TRL_loop = True
@@ -74,12 +77,12 @@ def multiple_run():
     uncertainty = True
     monte_carlo = 1
     
-    ship_growth = 1.072 #0.99
+    ship_growth = 1.072
     growth_scenario = ('Average', 'Small', 'Large')
-    TRL_Berth_list = (2, 3) #(1.5, 2, 2.5) #, 3)
-    TRL_Navi_list = (2, 3) #(1.5, 2, 2.5) #, 3)
-    TRL_Moni_list = (2, 3) #(1.5, 2, 2.5) #, 3)
-    crew_cost_list = (1.0, 1.5, 2.0) #1.5, 2.0)
+    TRL_Berth_list = (2, 3)
+    TRL_Navi_list = (2, 3)
+    TRL_Moni_list = (2, 3)
+    crew_cost_list = (1.0, 1.5, 2.0)
     ope_TRL_factor_list = (1000, 10000)
 
     ship_per_scccrew = 3
@@ -188,6 +191,7 @@ def multiple_run():
     
         tech_yml = get_yml('tech')
         ship_spec_yml = get_yml('ship_spec')
+        config_list = list(ship_spec_yml)
         tech, param = get_tech_ini(tech_yml, uncertainty, TRL_Berth, TRL_Navi, TRL_Moni)
         select_index = []
 
@@ -206,7 +210,7 @@ def multiple_run():
 
             Regulator.subsidize_investment(Manufacturer)
             tech = Manufacturer.invest(tech, Regulator)
-            tech = calculate_tech(tech, Owner.fleet, share_rate_O, share_rate_M, start_year+i-1)
+            tech = calculate_tech(tech, Owner.fleet, share_rate_O, share_rate_M, start_year+i-1, scaling_factor)
             tech, acc_navi_semi = calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
             
             spec_current = [''] * len(cost_types)
