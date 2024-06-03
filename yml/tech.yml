@@ -1,24 +1,24 @@
 Berth:
-  TRL_ini: 6 # Initial TRL
-  accident: 0.0064 # Accident related to Berthing (or tech0 per Total Accident (-)
-  min_cost: 34000 # Minimum installation cost (after broad implementation) (USD)
-Moni: # Same as above
+  TRL_ini: 6
+  accident: 0.0064
+  min_cost: 34000
+Moni:
   TRL_ini: 4
   accident: 0.029
   min_cost: 136000
-Navi: # Same as above
+Navi:
   TRL_ini: 3
   accident: 0.0094
   min_cost: 34000
 Others:
-  acc_reduction_full: 0.8 # Accident Reduction Rate (Human Error Ratio) (-)
-  integ_a: 725333 # Factor of capex reduction due to adoption (Learning curve) (USD)
-  integ_b: 0.05 # Factor of capex reduction due to adoption (Learning curve) (-)
-  manu_max: 150 # Not in Use 
-  ope_TRL_factor: 10000 # Value of Operational Experience for TRL increase (USD)
-  ope_max: 10000 # Not in Use
-  ope_safety_b: 0.2 # Factor of accident reduction due to TRL increase (Learning curve) (-)
-  randd_base: 0 # Initial R&D amount (USD)
-  rd_TRL_factor: 1 # How R&D activities make impacts on TRL increase (-)
-  rd_need_TRL: 20000000 # How R&D activities need for TRL increase (USD)
-  tech_integ_factor: 1.33 # CAPEX Increase for Integration (-)
+  acc_reduction_full: 0.8
+  integ_a: 725333
+  integ_b: 0.05
+  manu_max: 150
+  ope_TRL_factor: 10000
+  ope_max: 10000
+  ope_safety_b: 0.2
+  randd_base: 0
+  rd_TRL_factor: 1
+  rd_need_TRL: 20000000
+  tech_integ_factor: 1.33
