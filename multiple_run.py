@@ -40,7 +40,7 @@ def multiple_run():
     Settings
     '''    
     fleet_type = 'domestic'
-    start_year, end_year = 2022, 2040
+    start_year, end_year = 2022, 2050
     ship_age = 25
     dt_year = 50
 
@@ -76,9 +76,9 @@ def multiple_run():
     
     ship_growth = 1.072 #0.99
     growth_scenario = ('Average', 'Small', 'Large')
-    TRL_Berth_list = (2,) #3) #(1.5, 2, 2.5) #, 3)
-    TRL_Navi_list = (2,) #3) #(1.5, 2, 2.5) #, 3)
-    TRL_Moni_list = (2,) # 3) #(1.5, 2, 2.5) #, 3)
+    TRL_Berth_list = (2, 3) #(1.5, 2, 2.5) #, 3)
+    TRL_Navi_list = (2, 3) #(1.5, 2, 2.5) #, 3)
+    TRL_Moni_list = (2, 3) #(1.5, 2, 2.5) #, 3)
     crew_cost_list = (1.0, 1.5, 2.0) #1.5, 2.0)
     ope_TRL_factor_list = (1000, 10000)
 

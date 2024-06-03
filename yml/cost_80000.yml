@@ -6,16 +6,16 @@ OPEX:
     general_cost: 269000
     dock_cost: 420000
 
-CAPEX: # Assume ship year as 25 yrs
-    material_cost: 906667 # 34000000/25*2/3 [USD]
-    integrate_cost: 453333 # 34000000/25*1/3 [USD]
+CAPEX:
+    material_cost: 906667
+    integrate_cost: 453333
 
 VOYEX:
     port_call: 600000
     fuel_cost_ME: 1840000
     fuel_cost_AE: 280000
 
-AddCost: # should estimate from the basic?
+AddCost:
     SCC_Capex: 23444 
     SCC_Opex: 11181
     SCC_Personal: 132889
@@ -26,8 +26,8 @@ Others:
     moni_crew_factor: 0.56
     cook_crew_factor: 0.05
     mainte_amount: 67000
-    capex_material_ratio: 0.667 # Amend afterwards 
-    accom_reduce_navi: 0.025 # Just to confirm
+    capex_material_ratio: 0.667
+    accom_reduce_navi: 0.025
     accom_reduce_moni: 0.025
     num_crew_navi: 4
     num_crew_moni: 14
