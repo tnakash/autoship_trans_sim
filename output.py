@@ -11,29 +11,29 @@ import seaborn as sns
 
 # Define custom colormap
 cmap_colors = [
-    (0.7, 0.7, 0.7),   # NONE - Light Gray
-    (1, 0, 0),         # B - Red
-    (0, 0.9, 1),       # N1 - Light Blue
-    (0, 0.5, 1),       # N2 - Dark Blue
-    (1, 1, 0),         # M - Yellow
-    (1, 0, 1),         # BN1 - Light Purple
-    (0.6, 0, 1),       # BN2 - Dark Purple
-    (1, 0.5, 0),       # BM - Orange
-    (0, 1, 0),         # N1M - Light Green
-    (0, 0.5, 0),       # N2M - Dark Green
-    (0.2, 0.5, 0.5),   # BN1M - Dark Gray
-    (0.2, 0.2, 0.2)    # FULL - Black
+    (0.9, 0.9, 0.9),   # NONE - Light Gray
+    (0.8, 0.1, 0.1),   # B - Crimson Red
+    (0.2, 0.8, 0.9),   # N1 - Sky Blue
+    (0, 0.4, 0.8),     # N2 - Royal Blue
+    (0.95, 0.9, 0.25), # M - Golden Yellow
+    (0.8, 0.4, 0.8),   # BN1 - Lavender
+    (0.5, 0.2, 0.7),   # BN2 - Violet
+    (1, 0.6, 0.2),     # BM - Tangerine
+    (0.4, 0.8, 0.4),   # N1M - Mint Green
+    (0, 0.6, 0.2),     # N2M - Forest Green
+    (0.4, 0.4, 0.4),   # BN1M - Medium Gray
+    (0.1, 0.1, 0.1)    # FULL - Charcoal Black
 ]
 
 cmap_name = 'custom_cmap'
 custom_cmap = plt.cm.colors.ListedColormap(cmap_colors, name=cmap_name, N=len(cmap_colors))
 
 cmap_colors_crew = [
-    (0, 0.5, 1),       # N1 - Light Blue
-    (0, 0, 0.5),       # N2 - Dark Blue
-    (1, 1, 0),         # M - Yellow
-    (1, 0, 1),         # BN1 - Light Purple
-    (0.6, 0, 1),       # BN2 - Dark Purple
+    (0.2, 0.8, 0.9),   # Sky Blue
+    (0, 0.2, 0.5),     # Navy Blue
+    (0.95, 0.9, 0.25), # Golden Yellow
+    (0.8, 0.4, 0.8),   # Lavender
+    (0.5, 0.2, 0.7),   # Violet
 ]
 
 cmap_name = 'custom_cmap_crew'
@@ -113,72 +113,11 @@ def make_dataframe_for_output_multiple(start_year, end_year, config_list, ship_t
     return df_merge
 
 
-# def make_dataframe_for_output_multiple(start_year, end_year, config_list, ship_type_list):
-#     for i in range(len(ship_type_list)):
-#         df = pd.DataFrame({'year': range(start_year, end_year),
-#                             config_list[0]: [0] * (end_year - start_year),
-#                             config_list[1]: [0] * (end_year - start_year),
-#                             config_list[2]: [0] * (end_year - start_year),
-#                             config_list[3]: [0] * (end_year - start_year),
-#                             config_list[4]: [0] * (end_year - start_year),
-#                             config_list[5]: [0] * (end_year - start_year),
-#                             config_list[6]: [0] * (end_year - start_year),
-#                             config_list[7]: [0] * (end_year - start_year),
-#                             config_list[8]: [0] * (end_year - start_year),
-#                             config_list[9]: [0] * (end_year - start_year),
-#                             config_list[10]: [0] * (end_year - start_year),
-#                             config_list[11]: [0] * (end_year - start_year)})
-#         df_new = df.set_index('year')
-#         df_new['ship_type'] = ship_type_list[i]
-#         df_merge = df_new if i == 0 else pd.concat([df_merge, df_new])
-    
-#     return df_merge
-
-
-# def show_stackplot(result, label, title, directory):
-#     fig = plt.figure(figsize=(20,10))
-#     cm=plt.get_cmap('tab20')
-#     ax1 = fig.add_subplot(1, 1, 1)
-#     ax1.stackplot(result.index, [result[s] for s in label], labels=label, colors= [cm(i) for i in range(12)])
-#     ax1.set_title(title, fontsize=16)
-#     ax1.legend(loc='upper left', fontsize=16)
-#     st.pyplot(fig)
-#     fig.savefig(directory+'/'+title+'.png')
-
-
-# def plot_graph(data, x, y, hue, ylabel, title):
-#     fig = plt.figure(figsize=(12, 6))
-#     sns.barplot(x=x, y=y, hue=hue, data=data, ci=None, estimator=sum)
-#     plt.xlabel('Year', fontsize=16)
-#     plt.ylabel(ylabel, fontsize=16)
-#     plt.title(title, fontsize=16)
-#     plt.xticks(rotation=45)
-#     plt.tight_layout()
-#     st.pyplot(fig)
-#     # fig.savefig(directory + '/' + title + '.png')
-
-
-# def plot_graph_stack(data, x, y_list, ylabel_list, ylabel_total, title):
-#     fig = plt.figure(figsize=(12, 6))
-#     cm = plt.get_cmap('tab20')
-#     for i, y_each in range(y_list):
-#         sns.barplot(x=x, y=y_each, data=data, color=cm(i), label=ylabel_list(i), ci=None)
-
-#     plt.xlabel('Year', fontsize=16)
-#     plt.ylabel(ylabel_total, fontsize=16)
-#     plt.title(title, fontsize=16)
-#     plt.xticks(rotation=45, fontsize=16)
-#     plt.tight_layout()
-#     st.pyplot(fig)
-#     # fig.savefig(directory + '/' + title + '.png')
-
-
 def show_stacked_bar(result, label, title, directory, cmap = None):
     fig = plt.figure(figsize=(20, 10))
     cm = plt.get_cmap('tab20')
     ax1 = fig.add_subplot(1, 1, 1)
 
-    # 各データセットを積み上げ棒グラフとして描画
     bottom = None
     for i, s in enumerate(label):
         if cmap == 'config':
@@ -192,8 +131,6 @@ def show_stacked_bar(result, label, title, directory, cmap = None):
             bottom = result[s]
         else:
             bottom += result[s]
-
-    # plt.ylim(0, max_y_value)
 
     ax1.set_title(title, fontsize=16)
     ax1.legend(loc='upper left', fontsize=16)
@@ -227,22 +164,6 @@ def show_linechart(x, y, label, title, directory):
     fig.savefig(directory+'/'+title+'.png')
 
 
-# def show_linechart_two(x, y1, y2, label, title, directory):
-#     fig = plt.figure(figsize=(20,10))
-#     ax = fig.add_subplot(1, 1, 1)
-#     ax.plot(x, y1, label='Profit')
-#     ax.plot(x, y2, label='Subsidy')
-#     ax.set_ylabel(label)
-#     ax.set_title(title)
-#     ax.legend(loc='upper left')
-
-#     ax.set_xticks(x)
-#     ax.set_xticklabels([int(label) for label in x])
-
-#     st.pyplot(fig)
-#     fig.savefig(directory+'/'+title+'.png')
-
-
 def show_linechart_three(x, y1, y2, y3, label, title, directory, legend_pos):
     fig = plt.figure(figsize=(20,10))
     ax = fig.add_subplot(1, 1, 1)
@@ -258,43 +179,6 @@ def show_linechart_three(x, y1, y2, y3, label, title, directory, legend_pos):
     
     st.pyplot(fig)
     fig.savefig(directory+'/'+title+'.png')
-
-
-# def get_resultsareachart(result_data):
-#     result_data = result_data.reset_index().melt('year', var_name='type', value_name='y')
-#     hover = alt.selection_single(
-#         fields=['year'],
-#         nearest=True,
-#         on='mouseover',
-#         empty='none',
-#     )
-#     graphbase = (
-#         alt.Chart(result_data)
-#         .mark_area()
-#         .encode(
-#             alt.X('year', title=''),
-#             alt.Y('y', title=''),
-#             color='type',
-#         )
-#     )
-#     # Draw points on the line, and highlight based on selection
-#     graphpoints = graphbase.transform_filter(hover).mark_circle(size=65)
-#     # Draw a rule at the location of the selection
-#     graphtooltips = (
-#         alt.Chart(result_data)
-#         .mark_rule()
-#         .encode(
-#             alt.X('year'),
-#             alt.Y('y'),
-#             opacity=alt.condition(hover, alt.value(0.3), alt.value(0)),
-#             tooltip=[
-#                 alt.Tooltip('year', title='year'),
-#                 alt.Tooltip('y', title='value'),
-#             ],
-#         )
-#         .add_selection(hover)
-#     )
-#     return (graphbase+ graphpoints+ graphtooltips).interactive()
 
 
 def show_tradespace_anime(a, b, alabel, blabel, list, selected_index, directory, config_list):
@@ -355,18 +239,14 @@ def show_tradespace_for_multiple_color(a, b, alabel, blabel, title, control_case
 
 
 def process_ship_data(grouped_data, ship_type, config_list, title_suffix, dir_fig):
-    # データのピボットテーブル化
     grouped_data_ship = grouped_data.query(f"ship_type == '{ship_type}'").pivot_table(index=['year'], columns='config', values='ship_id', aggfunc='sum', fill_value=0)
 
-    # 欠けている設定の補完
     missing_configs = set(config_list) - set(grouped_data_ship.columns)
     for missing_config in missing_configs:
         grouped_data_ship[missing_config] = 0
 
-    # データフレームの整形
     grouped_data_ship.reset_index(inplace=True)
     grouped_data_ship = grouped_data_ship.rename(columns={'index': 'year'})
     grouped_data_ship.reset_index(drop=True, inplace=True)
 
-    # グラフの表示
     show_stacked_bar(grouped_data_ship, config_list, f"Number of Ships by Configuration ({title_suffix}) [ship]", dir_fig, 'config')

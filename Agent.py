@@ -15,7 +15,6 @@ class Investor():
         self.invest_amount = amount
         self.invest_used = 0
 
-    # def investment(self, cost, TRL, year, delay, invest, budget):
     def invest(self, tech, policymaker):
         self.invest_used = self.invest_amount
         if (self.invest_tech == 'Berth' or (tech.TRL[1] == 9 and tech.TRL[2] == 9)) and tech.TRL[0] < 9:
