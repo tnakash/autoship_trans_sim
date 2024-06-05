@@ -3,6 +3,7 @@ import pandas as pd
 import warnings
 
 warnings.simplefilter('ignore', FutureWarning)
+semi_auto_TRLgap = 3
 
 class Investor():
     def __init__(self):
@@ -17,26 +18,25 @@ class Investor():
 
     def invest(self, tech, policymaker):
         self.invest_used = self.invest_amount
-        if (self.invest_tech == 'Berth' or (tech.TRL[1] == 9 and tech.TRL[2] == 9)) and tech.TRL[0] < 9:
-            tech.loc[0, ["Rexp"]] += self.invest_amount
-        elif (self.invest_tech == 'Navi' or (tech.TRL[0] == 9 and tech.TRL[2] == 9)) and tech.TRL[1] < 9:
-            tech.loc[1, ["Rexp"]] += self.invest_amount
-        elif (self.invest_tech == 'Moni' or (tech.TRL[0] == 9 and tech.TRL[1] == 9)) and tech.TRL[2] < 9:
-            tech.loc[2, ["Rexp"]] += self.invest_amount
-        elif tech.TRL[0] < 9 and tech.TRL[1] < 9 and tech.TRL[2] == 9:
-            tech.loc[0, ["Rexp"]] += self.invest_amount / 2
-            tech.loc[1, ["Rexp"]] += self.invest_amount / 2
-        elif tech.TRL[0] < 9 and tech.TRL[1] == 9 and tech.TRL[2] < 9:
-            tech.loc[0, ["Rexp"]] += self.invest_amount / 2
-            tech.loc[2, ["Rexp"]] += self.invest_amount / 2
-        elif tech.TRL[0] == 9 and tech.TRL[1] < 9 and tech.TRL[2] < 9:
-            tech.loc[1, ["Rexp"]] += self.invest_amount / 2
-            tech.loc[2, ["Rexp"]] += self.invest_amount / 2            
-        elif tech.TRL[0] < 9 and tech.TRL[1] < 9 and tech.TRL[2] < 9:
-            tech.loc[0, ["Rexp"]] += self.invest_amount / 3
-            tech.loc[1, ["Rexp"]] += self.invest_amount / 3
-            tech.loc[2, ["Rexp"]] += self.invest_amount / 3
+        tech_indices = {'Berth': 0, 'Navi': 1, 'Moni': 2}
+        selected_tech_index = tech_indices.get(self.invest_tech)
+
+        # List of indices of non-complete technologies (TRL < 9)
+        incomplete_tech_indices = [i for i, trl in enumerate(tech.TRL) if trl < 9]
+
+        if selected_tech_index is not None and selected_tech_index in incomplete_tech_indices:
+            # Invest only in the selected technology if it is not complete
+            tech.loc[selected_tech_index, "Rexp"] += self.invest_amount
+        elif len(incomplete_tech_indices) == 1:
+            # Invest in the remaining technology if only one is not complete
+            tech.loc[incomplete_tech_indices[0], "Rexp"] += self.invest_amount
+        elif len(incomplete_tech_indices) > 1:
+            # Evenly distribute investment among all incomplete technologies
+            amount_per_tech = self.invest_amount / len(incomplete_tech_indices)
+            for i in incomplete_tech_indices:
+                tech.loc[i, "Rexp"] += amount_per_tech
         else:
+            # No investment made if all technologies are complete
             self.invest_used = 0
             policymaker.sub_used -= policymaker.sub_RandD
 
@@ -222,7 +222,7 @@ def consider_TRL_regulation(select_parameter, TRL, TRLreg):
     for i in berth_list:
         select_parameter[i] += float('inf') if TRL[0] < TRLreg else 0
     for i in navi1_list:
-        select_parameter[i] += float('inf') if TRL[1] + 3 < TRLreg else 0
+        select_parameter[i] += float('inf') if TRL[1] + semi_auto_TRLgap < TRLreg else 0
     for i in navi2_list:
         select_parameter[i] += float('inf') if TRL[1] < TRLreg else 0
     for i in moni_list:
@@ -254,7 +254,7 @@ class PolicyMaker():
     
     def select_for_sub_adoption(self, spec, tech, TRLreg):
         for i in range(11, 0, -1):
-            if (tech.TRL[0] >= TRLreg or spec.Berth[i] == 0) and ((tech.TRL[1] >= TRLreg or spec.Navi[i] == 0) or (tech.TRL[1] >= TRLreg-3 and spec.Navi[i] == 1)) and (tech.TRL[2] >= TRLreg or spec.Moni[i] == 0):
+            if (tech.TRL[0] >= TRLreg or spec.Berth[i] == 0) and ((tech.TRL[1] >= TRLreg or spec.Navi[i] == 0) or (tech.TRL[1] >= TRLreg - semi_auto_TRLgap and spec.Navi[i] == 1)) and (tech.TRL[2] >= TRLreg or spec.Moni[i] == 0):
                 self.sub_select = i
                 break
     

@@ -11,7 +11,7 @@ from PIL import Image
 
 from Agent import Investor, PolicyMaker, ShipOwner
 from calculate import calculate_cost, calculate_tech, calculate_TRL_cost, get_tech_ini
-from input import get_scenario, get_yml, set_scenario, set_tech, save_uploaded_file
+from input import get_scenario, get_yml, set_scenario, save_uploaded_file
 from output import (
     show_linechart_three,
     show_tradespace_general,
@@ -213,7 +213,7 @@ def main():
             # Iteration for ship_type
             for j in range(len(ship_types)):
                 # World (Cost Reduction and Safety Improvement)
-                spec_current[j]= calculate_cost(ship_spec_yml, cost_yml[j], start_year+i, tech, acc_navi_semi, config_list, fuel_rate, crew_cost_rate, insurance_rate, ship_per_scccrew)
+                spec_current[j]= calculate_cost(ship_spec_yml, cost_yml[j], start_year+i, tech, acc_navi_semi, fuel_rate, crew_cost_rate, insurance_rate, ship_per_scccrew)
                 # Ship Owner (Adoption and Purchase)
                 select = Owner.select_ship(spec_current[j], tech, TRLreg)
                 Owner.purchase_ship(config_list, select, i, start_year, ship_size_list[j], ship_types[j])                
