@@ -6,7 +6,8 @@ warnings.simplefilter('ignore', FutureWarning)
 semi_auto_TRLgap = 3
 
 class Investor():
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self.invest_tech = 'None'
         self.invest_amount = 0
         return
@@ -18,7 +19,8 @@ class Investor():
 
     def invest(self, tech, policymaker):
         self.invest_used = self.invest_amount
-        tech_indices = {'Berth': 0, 'Navi': 1, 'Moni': 2}
+        tech_name_list = tech['tech_name'].tolist()
+        tech_indices = {name: index for index, name in enumerate(tech_name_list)} # {'Berth': 0, 'Navi': 1, 'Moni': 2}
         selected_tech_index = tech_indices.get(self.invest_tech)
 
         # List of indices of non-complete technologies (TRL < 9)
@@ -27,16 +29,13 @@ class Investor():
         if selected_tech_index is not None and selected_tech_index in incomplete_tech_indices:
             # Invest only in the selected technology if it is not complete
             tech.loc[selected_tech_index, "Rexp"] += self.invest_amount
-        elif len(incomplete_tech_indices) == 1:
-            # Invest in the remaining technology if only one is not complete
-            tech.loc[incomplete_tech_indices[0], "Rexp"] += self.invest_amount
-        elif len(incomplete_tech_indices) > 1:
+        elif len(incomplete_tech_indices) >= 1:
             # Evenly distribute investment among all incomplete technologies
             amount_per_tech = self.invest_amount / len(incomplete_tech_indices)
             for i in incomplete_tech_indices:
                 tech.loc[i, "Rexp"] += amount_per_tech
         else:
-            # No investment made if all technologies are complete
+            # No investment made if all technologies are completed
             self.invest_used = 0
             policymaker.sub_used -= policymaker.sub_RandD
 
@@ -75,6 +74,8 @@ class ShipOwner:
 
     def purchase_ship(self, config_list, select, year, start_year, ship_size, ship_type):
         berth, navi, moni = config_to_tech(select)
+    # def purchase_ship(self, ship_spec, config_list, select, year, start_year, ship_size, ship_type):
+    #     berth, navi, moni = ship_spec.get(select, tuple(None for _ in next(iter(ship_spec.values())).keys() if _ != 'index'))
         for i in range(self.num_newbuilding.loc[(self.num_newbuilding['year'] == start_year + year) & (self.num_newbuilding['DWT'] == ship_size),'ship'].values[0]):
             new_row = pd.Series({'year': start_year+year, 
                                  'ship_id': self.fleet['ship_id'].max() + 1, 
@@ -87,20 +88,22 @@ class ShipOwner:
                                  'config': config_list[select], 
                                  'is_operational': True, 
                                  'misc': 'newbuilt', 
-                                 'owner': self
+                                 'owner': self.name
                                  })
             self.fleet.loc[len(self.fleet)] = new_row
 
+    # def purchase_ship_with_adoption(self, ship_spec, spec, config_list, select, tech, year, TRLreg, PolicyMaker, start_year, ship_size):
     def purchase_ship_with_adoption(self, spec, config_list, select, tech, year, TRLreg, PolicyMaker, start_year, ship_size):
         capex_sum, opex_sum, voyex_sum, addcost_sum, accident_sum = calculate_assumption(spec)
         annual_cost = opex_sum + capex_sum + voyex_sum + addcost_sum                
         select_parameter = annual_cost * self.economy + accident_sum * self.safety * capex_sum * self.accident_loss - spec['subsidy']
+        # select_parameter = consider_TRL_regulation(ship_spec, select_parameter, tech.TRL, TRLreg)
         select_parameter = consider_TRL_regulation(select_parameter, tech.TRL, TRLreg)
         select = select_parameter.idxmin()
         if math.isnan(select):
             select = 0
 
-        if PolicyMaker.sub_select != select:
+        if PolicyMaker.sub_select != select and select_parameter[PolicyMaker.sub_select] != float('inf'):
             PolicyMaker.sub_per_ship = select_parameter[PolicyMaker.sub_select] - select_parameter[select]
             num_subsidized_ship_possible = PolicyMaker.sub_Adoption // PolicyMaker.sub_per_ship
             newbuilding_ship = self.num_newbuilding.loc[(self.num_newbuilding['year'] == start_year + year) & (self.num_newbuilding['DWT'] == ship_size),'ship'].values[0]
@@ -111,6 +114,8 @@ class ShipOwner:
             num_subsidized_ship = 0
 
         berth, navi, moni = config_to_tech(PolicyMaker.sub_select)
+        # berth, navi, moni = ship_spec.get(PolicyMaker.sub_select, tuple(None for _ in next(iter(ship_spec.values())).keys() if _ != 'index'))
+
         list = self.fleet.loc[(self.fleet['year_built'] == start_year + year) & (self.fleet['DWT'] == ship_size)]
         self.fleet = self.fleet.drop(self.fleet.loc[(self.fleet['year_built'] == start_year + year) & (self.fleet['DWT'] == ship_size)].index)
         for i in range(int(num_subsidized_ship)):
@@ -129,6 +134,7 @@ class ShipOwner:
         self.fleet.update(filtered_fleet)
     
     
+    # def select_retrofit_ship(self, ship_spec, spec, tech, TRLreg, ship_age, retrofit_cost_rate, config_list, year, start_year, retrofit_limit, ship_size):
     def select_retrofit_ship(self, spec, tech, TRLreg, ship_age, retrofit_cost_rate, config_list, year, start_year, retrofit_limit, ship_size):
         capex_sum, opex_sum, voyex_sum, addcost_sum, accident_sum = calculate_assumption_for_retrofit(spec)
         annual_cost = opex_sum + capex_sum + voyex_sum + addcost_sum
@@ -142,6 +148,7 @@ class ShipOwner:
                 years_in_use = self.fleet.at[i, 'year'] - self.fleet.at[i, 'year_built']
                 select_parameter = (annual_cost * self.economy + accident_sum * self.safety * capex_sum * self.accident_loss) * (ship_age - years_in_use) + retrofit_cost
                 select_parameter[config_list.index(self.fleet.at[i, 'config'])] -= retrofit_cost 
+                # select_parameter = consider_TRL_regulation(ship_spec, select_parameter, tech.TRL, TRLreg)
                 select_parameter = consider_TRL_regulation(select_parameter, tech.TRL, TRLreg)
                 select = select_parameter.idxmin()
                 if math.isnan(select):
@@ -149,6 +156,8 @@ class ShipOwner:
                 
                 # retrofit if the technology can be upgraded
                 berth, navi, moni = config_to_tech(select)
+                # berth, navi, moni = ship_spec.get(select, tuple(None for _ in next(iter(ship_spec.values())).keys() if _ != 'index'))
+                
                 if self.fleet.at[i, 'config'] == config_list[select] or self.fleet.at[i, 'berthing'] > berth or self.fleet.at[i, 'navigation'] > navi or self.fleet.at[i, 'monitoring'] > moni:
                     continue
                 else:
@@ -163,7 +172,8 @@ class ShipOwner:
                                          'config': config_list[select], 
                                          'is_operational': True, 
                                          'misc': 'retrofitted', 
-                                         'owner': self})
+                                         'owner': self.name
+                                         })
                     retrofitted_ship += 1
                     if(retrofitted_ship > retrofit_limit):
                         break
@@ -226,12 +236,24 @@ def consider_TRL_regulation(select_parameter, TRL, TRLreg):
     for i in navi2_list:
         select_parameter[i] += float('inf') if TRL[1] < TRLreg else 0
     for i in moni_list:
-        select_parameter[i] += float('inf') if TRL[2] < TRLreg else 0
-    
+        select_parameter[i] += float('inf') if TRL[2] < TRLreg else 0    
+
+# def consider_TRL_regulation(ship_spec, select_parameter, TRL, TRLreg):
+    # for config, tech_levels in ship_spec.items():
+    #     if tech_levels['Berth'] and TRL[0] < TRLreg:
+    #         select_parameter[config] += float('inf')
+    #     if tech_levels['Navi'] == 1 and TRL[1] + 3 < TRLreg:
+    #         select_parameter[config] += float('inf')
+    #     if tech_levels['Navi'] == 2 and TRL[1] < TRLreg:
+    #         select_parameter[config] += float('inf')
+    #     if tech_levels['Moni'] and TRL[2] < TRLreg:
+    #         select_parameter[config] += float('inf')
+
     return select_parameter
 
 class PolicyMaker():
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self.sub_RandD = 0
         self.sub_Adoption = 0
         self.sub_Experience = 0
@@ -245,15 +267,16 @@ class PolicyMaker():
         self.sub_select = 0
         self.sub_used = 0
         self.sub_per_ship = 0
-        self.sub_Experience = sub_Experience # / 3.0
+        self.sub_Experience = sub_Experience
         self.trial_times = trial_times
 
     def subsidize_investment(self, investor):
         investor.invest_amount += self.sub_RandD
         self.sub_used += self.sub_RandD
     
+    # Need to be rewritten
     def select_for_sub_adoption(self, spec, tech, TRLreg):
-        for i in range(11, 0, -1):
+        for i in range(len(spec)-1, 0, -1):
             if (tech.TRL[0] >= TRLreg or spec.Berth[i] == 0) and ((tech.TRL[1] >= TRLreg or spec.Navi[i] == 0) or (tech.TRL[1] >= TRLreg - semi_auto_TRLgap and spec.Navi[i] == 1)) and (tech.TRL[2] >= TRLreg or spec.Moni[i] == 0):
                 self.sub_select = i
                 break
@@ -261,6 +284,6 @@ class PolicyMaker():
     def subsidize_experience(self, tech, TRLreg):
         for i in range(len(tech.TRL)):
             if tech.TRL[i] < TRLreg:
-                tech.loc[i, ["Mexp"]] += self.sub_Experience / (tech.tech_cost[i] * self.trial_times) / 3 # 3 is the number of technologies
-                tech.loc[i, ["Oexp"]] += self.sub_Experience / (tech.tech_cost[i] * self.trial_times) / 3
+                tech.loc[i, ["Mexp"]] += self.sub_Experience / (tech.tech_cost[i] * self.trial_times) / len(tech.TRL)
+                tech.loc[i, ["Oexp"]] += self.sub_Experience / (tech.tech_cost[i] * self.trial_times) / len(tech.TRL)
                 self.sub_used += self.sub_Experience

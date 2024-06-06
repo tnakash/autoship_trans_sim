@@ -5,8 +5,9 @@ import warnings
 warnings.simplefilter('ignore', FutureWarning)
 semi_auto_TRLgap = 3
 
+# Calculate Cost for each ship spec
 def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi, fuel_rate, crew_cost_rate, insurance_rate, ship_per_scccrew):
-    tech_list = ['Berth', 'Navi', 'Moni']
+    tech_list = tech['tech_name'].tolist() #['Berth', 'Navi', 'Moni']
     crew_list = ['NaviCrew', 'EngiCrew', 'Steward', 'NaviCrewSCC', 'EngiCrewSCC']
     cost_list = ['OPEX', 'CAPEX', 'VOYEX', 'AddCost']
     opex_list = ['crew_cost', 'store_cost', 'maintenance_cost', 'insurance_cost', 'general_cost', 'dock_cost']
@@ -88,7 +89,7 @@ def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi, fuel_rate, crew_c
         Navi[i] = ship_spec[config[i]]['Navi']
         Moni[i] = ship_spec[config[i]]['Moni']
         
-        # 本来は実際の人数を考慮し，結びつける必要がある
+        # Need to be rewritten
         num_navi[i] = 0 if Navi[i] == 2 else num_crew_navi / 2 if Navi[i] == 1 else num_crew_navi
         num_engi[i] = 0 if Moni[i] == 1 else num_crew_moni
         num_cook[i] = 0 if Navi[i] == 2 and Moni[i] == 1 else num_crew_cook
@@ -190,21 +191,22 @@ def calculate_cost(ship_spec, cost, year, tech, acc_navi_semi, fuel_rate, crew_c
     
     return spec
 
-# rewrite awterwards
+# Need to be rewritten: Set as yml file
 def trl_rate(trl):
     trl_rate = 0.25 if trl == 7 else 0.5 if trl == 8 else 1 if trl >= 9 else 0
     # trl_rate = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0.25, 8: 0.5, 9: 1}
     return trl_rate
 
+# Need to be rewritten: Assuming three technologies
 def get_tech_ini(tech_yml, uncertainty, trl_b = 0, trl_n = 0, trl_m = 0):
-    tech_list = ['Berth', 'Navi', 'Moni'] # ideally from yml
+    tech_list = list(tech_yml)[:-1] # Without "Others"
     column = ['tech_name', 'tech_cost', 'integ_factor', 'integ_factor_ini', 'TRL', 'Rexp', 'Mexp', 'Oexp', 'tech_cost_min', 'accident_ratio', 'accident_ratio_base', 'accident_ratio_ini']
 
     tech_cost = [0] * len(tech_list)
     tech_cost_min = [0] * len(tech_list)
     integ_factor = [0] * len(tech_list)
     integ_factor_ini = [0] * len(tech_list)
-    TRL = [0] * len(tech_list)  # May change to TECH
+    TRL = [0] * len(tech_list)
     Rexp = [0] * len(tech_list)
     Mexp = [0] * len(tech_list)
     Oexp = [0] * len(tech_list)
@@ -230,7 +232,7 @@ def get_tech_ini(tech_yml, uncertainty, trl_b = 0, trl_n = 0, trl_m = 0):
         #     rd_need_TRL[i] = np.random.normal(tech_yml['Others']['rd_need_TRL'], tech_yml['Others']['rd_need_TRL']/3)
         #     rd_need_TRL[i] = 0 if rd_need_TRL[i] < 0 else rd_need_TRL[i] 
     else:
-        for i in range(3):
+        for i in range(len(tech_list)):
             rd_need_TRL[i] = tech_yml['Others']['rd_need_TRL']
 
     integ_b = tech_yml['Others']['integ_b']
@@ -273,6 +275,7 @@ def get_tech_ini(tech_yml, uncertainty, trl_b = 0, trl_n = 0, trl_m = 0):
     
     return tech_df, param
 
+# Need to be rewritten
 def calculate_tech(tech, ship_fleet, share_rate_O, share_rate_M, current_year, scaling_factor):
     tech.loc[0, ["Oexp"]] += ((ship_fleet['berthing'] == 1) & (ship_fleet['year'] == current_year) & (ship_fleet['is_operational'] == True)).sum() * share_rate_O * scaling_factor
     tech.loc[0, ["Mexp"]] += ((ship_fleet['berthing'] == 1) & (ship_fleet['year'] == current_year) & (ship_fleet['year_built'] == current_year)).sum() * share_rate_M * scaling_factor
@@ -287,6 +290,7 @@ def calculate_tech(tech, ship_fleet, share_rate_O, share_rate_M, current_year, s
 
 
 def calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop):
+    # Need to be rewritten
     TRL_need = [0] * 3
     for i in range(len(TRL_need)):
         TRL_need[i] = param.rd_need_TRL[i]

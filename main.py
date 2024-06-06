@@ -43,9 +43,10 @@ accident_list = [
     'accident_moni'
     ]
 
-'''
-Main Function with Streamlit UI
-'''
+# -------------------------------------------------------
+# Main Function with Streamlit UI
+# -------------------------------------------------------
+
 def main():
     '''
     ## Autonomous Ship Transition Simulator
@@ -64,6 +65,7 @@ def main():
     scaling_factor = st.slider('To save the simulation time, reduce the number of ship and people to 1/X', 1, 10, 1)
 
     if fleet_type == 'domestic':
+        # Special setting for "Double in 10 years"
         growth_scenario = st.selectbox('Scenario for Growth (assume double in 10 yrs)', ('Average', 'Small', 'Large'))
         numship_growth = 1.072 if growth_scenario == 'Average' else numship_growth
         fleet_yml = get_yml('fleet_domestic')
@@ -107,6 +109,19 @@ def main():
     estimated_loss = ship_age # st.sidebar.number_input('Estimated Accident Loss Amount (compared to annual CAPEX) [times]', value = 25) 
     economy = 1  # st.sidebar.slider('Profitability weight[-]', 0.0, 1.0, 1.0)
     safety = st.sidebar.slider('Safety weight Compared to Profitability', 0, 10, 1)
+    
+    # num_ship_owners = st.slider('Number of Ship Owners', 1, 5, 1)
+    # owner_name = [''] * num_ship_owners
+    # estimated_loss = [] * num_ship_owners
+    # economy = [] * num_ship_owners
+    # safety = [] * num_ship_owners
+
+    # st.sidebar.write("Parameters for ship adoption of each owner")
+    # for i in num_ship_owners:
+    #     owner_name[i] = st.text_input('Owners name', value='owner_'+str(i))
+    #     estimated_loss[i] = ship_age # st.sidebar.number_input('Estimated Accident Loss Amount (compared to annual CAPEX) [times]', value = 25) 
+    #     economy[i] = 1  # st.sidebar.slider('Profitability weight[-]', 0.0, 1.0, 1.0)
+    #     safety[i] = st.sidebar.slider('Safety weight Compared to Profitability', 0, 10, 1)
 
     st.sidebar.markdown('### 2.2 Manufacturer (R&D Investor))')
     st.sidebar.write("Technology type and Amount of investment")    
@@ -121,22 +136,17 @@ def main():
     trial_times = 1  # number of trials for getting one experience
     TRLreg = st.sidebar.selectbox('TRL regulation (minimum TRL for deployment)', (8, 7))
 
-    # uploaded_file = st.file_uploader("upload YAML file", type="yaml")
-    # if uploaded_file is not None:
-    #     save_folder = "yml/"
-    #     if not os.path.exists(save_folder):
-    #         os.makedirs(save_folder)
-    #     file_path = save_uploaded_file(uploaded_file, save_folder)
-    #     st.success(f"save YAML file: {file_path}")
-
     if growth_scenario == 'Small':
         numship_growth_list = [1.145, 1.145, 1.145, 1., 1.]
     elif growth_scenario == 'Large':
         numship_growth_list = [1., 1., 1., 1.0975, 1.0975]
     else:
         numship_growth_list = [numship_growth] * len(ship_types)
-    
+
+    # ---------------------------------------------------
     # Set scenario and cost, ship, spec, tech parameters
+    # ---------------------------------------------------
+
     set_scenario(
         start_year, end_year, 
         economy, safety, estimated_loss, subsidy_RandD, subsidy_Adoption, TRLreg, 
@@ -144,26 +154,24 @@ def main():
 
     scenario_yml = get_yml('scenario')
 
-    # Fleet Lists
     current_fleet, num_newbuilding, ship_age_list, ship_size_list = get_scenario(scenario_yml, fleet_yml, ship_types, fleet_type)
 
     tech_yml = get_yml('tech')
     ship_spec_yml = get_yml('ship_spec')
     config_list = list(ship_spec_yml)
     tech, param = get_tech_ini(tech_yml, uncertainty, TRL_Berth, TRL_Navi, TRL_Moni)
-    select_index = []
 
     cost_yml = [''] * len(ship_types)
     for i in range(len(cost_types)):
         cost_yml[i] = get_yml(cost_types[i])
 
+    spec_current = [''] * len(cost_types)
+
+    # If need to generalize cost_list, reset cost_list
+    # cost_list = list(cost_yml[0])[:-1] # Without "Others"
+
     spec_each = [''] * len(ship_types)    
 
-    # Set agents
-    Owner = ShipOwner('Owner', economy, safety, current_fleet, num_newbuilding, estimated_loss)
-    Manufacturer = Investor()
-    Regulator = PolicyMaker()
-    
     # Set result directory
     DIR = "result/"+casename
     if not os.path.exists(DIR):
@@ -172,8 +180,21 @@ def main():
     DIR_FIG = "result/"+casename+'/fig'
     if not os.path.exists(DIR_FIG):
         os.makedirs(DIR_FIG)
-    
+
+    # ---------------------------------------------------
+    # Set agents
+    # ---------------------------------------------------
+
+    Owner = ShipOwner('Owner', economy, safety, current_fleet, num_newbuilding, estimated_loss)
+    # Owner_1 = ShipOwner('Owner_1', economy, safety, current_fleet, num_newbuilding, estimated_loss)
+    # Owner_2 = ShipOwner('Owner_2', economy, safety, current_fleet, num_newbuilding, estimated_loss)
+    Manufacturer = Investor('Manufacturer_1')
+    Regulator = PolicyMaker('Regulator_1')
+
+    # ---------------------------------------------------
     # Start Simulation
+    # ---------------------------------------------------
+
     if 'Year' not in st.session_state:
         st.session_state['Year'] = start_year
     
@@ -191,46 +212,71 @@ def main():
         sim_year=st.session_state.Year
         st.write('Simulation from '+str(sim_year)+' to '+str(end_year))
 
+        # -----------------------------------------------
         # Annual iteration
+        # -----------------------------------------------
         for i in range(sim_year-start_year, end_year-start_year+1, 1):    
             Manufacturer.reset(invest_tech,invest_amount)
             Regulator.reset(subsidy_RandD, subsidy_Adoption, subsidy_Experience, trial_times) 
             if i > 0:
                 Owner.one_step(start_year+i)
+                # Owner_1.one_step(start_year+i)
+                # Owner_2.one_step(start_year+i)
 
-            # Regulator (Subsidy for Manufacturer) (Increase the investment amount)
+            # Owner_fleet = pd.concat([Owner_1.fleet, Owner_2.fleet])
+            # Regulator(s) Subsidizes for Manufacturer(s) (Increase the investment amount)
             Regulator.subsidize_investment(Manufacturer)
             
-            # Manufacturer (R&D (Investment))
+            # Manufacturers invest for R&D (if no R&D investment, give subsidy back)
             tech = Manufacturer.invest(tech, Regulator)
             
             # World (Technology Development)
             tech = calculate_tech(tech, Owner.fleet, share_rate_O, share_rate_M, start_year+i-1, scaling_factor)
             tech, acc_navi_semi = calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
-            
-            spec_current = [''] * len(cost_types)
-            
+                        
             # Iteration for ship_type
             for j in range(len(ship_types)):
-                # World (Cost Reduction and Safety Improvement)
+                # World (Consider Cost Reduction and Safety Improvement for each ship spec)
                 spec_current[j]= calculate_cost(ship_spec_yml, cost_yml[j], start_year+i, tech, acc_navi_semi, fuel_rate, crew_cost_rate, insurance_rate, ship_per_scccrew)
+
                 # Ship Owner (Adoption and Purchase)
+                # for owner in owner_list:
                 select = Owner.select_ship(spec_current[j], tech, TRLreg)
                 Owner.purchase_ship(config_list, select, i, start_year, ship_size_list[j], ship_types[j])                
-                # Select the only one kind of ship at one year (TBD)
-                select_index.append(select)
+
+                # select_1 = Owner_1.select_ship(spec_current[j], tech, TRLreg)
+                # Owner_1.purchase_ship(config_list, select_1, i, start_year, ship_size_list[j], ship_types[j])                
+
+                # select_2 = Owner_2.select_ship(spec_current[j], tech, TRLreg)
+                # Owner_2.purchase_ship(config_list, select_2, i, start_year, ship_size_list[j], ship_types[j])                
+
                 # Regulator (Subsidy for Adoption)
                 if subsidy_Adoption > 0:
                     Regulator.select_for_sub_adoption(spec_current[j], tech, TRLreg)
                     Owner.purchase_ship_with_adoption(spec_current[j], config_list, select, tech, i, TRLreg, Regulator, start_year, ship_size_list[j])
+                    # Owner_1.purchase_ship_with_adoption(spec_current[j], config_list, select_1, tech, i, TRLreg, Regulator, start_year, ship_size_list[j])
+                    # Owner_2.purchase_ship_with_adoption(spec_current[j], config_list, select_2, tech, i, TRLreg, Regulator, start_year, ship_size_list[j])
+
+
                 # Ship Owner (Retrofit)
                 if retrofit:
+                    # for owner in owner_list:
                     Owner.select_retrofit_ship(spec_current[j], tech, TRLreg, ship_age_list[j], retrofit_cost, config_list, i, start_year, retrofit_limit, ship_size_list[j])
+                    # Owner_1.select_retrofit_ship(spec_current[j], tech, TRLreg, ship_age_list[j], retrofit_cost, config_list, i, start_year, retrofit_limit, ship_size_list[j])
+                    # Owner_2.select_retrofit_ship(spec_current[j], tech, TRLreg, ship_age_list[j], retrofit_cost, config_list, i, start_year, retrofit_limit, ship_size_list[j])
+
                 # Regulator (Grand Challenge)
                 if subsidy_Experience > 0:
                     Regulator.subsidize_experience(tech, TRLreg)
+
                 # Ship Owner (Scrap)
+                # for owner in owner_list:
                 Owner.scrap_ship(ship_age_list[j], i, start_year)
+                # Owner_1.scrap_ship(ship_age_list[j], i, start_year)
+                # Owner_2.scrap_ship(ship_age_list[j], i, start_year)
+
+                # select = select_1
+
                 # Show Tradespace
                 if show_tradespace and (start_year+i) % tradespace_interval == 0:
                     show_tradespace_general(spec_current[j].OPEX+spec_current[j].CAPEX+spec_current[j].VOYEX+spec_current[j].AddCost,
@@ -254,8 +300,10 @@ def main():
         # proceed year
         st.session_state.Year += end_year - start_year + 1 # dt_year
         
+        # Owner_fleet = pd.concat([Owner_1.fleet, Owner_2.fleet])
+        # merged_data = pd.merge(Owner_fleet, spec, on=['year', 'ship_type', 'config'], how='inner')
         merged_data = pd.merge(Owner.fleet, spec, on=['year', 'ship_type', 'config'], how='inner')
-        
+
         grouped_data = merged_data.groupby(['year', 'config', 'ship_type']).agg({
             'ship_id': 'count',
             }).reset_index()
