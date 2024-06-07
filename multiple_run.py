@@ -31,17 +31,25 @@ crew_list = ['NaviCrew', 'EngiCrew', 'Steward']
 cost_list = ['OPEX', 'CAPEX', 'VOYEX', 'AddCost']
 accident_list = ['accident_berth', 'accident_navi', 'accident_moni']
 
-ship_types = ['ship_1', 'ship_2', 'ship_3', 'ship_4', 'ship_5']
-cost_types = ['cost_99', 'cost_199', 'cost_499', 'cost_749', 'cost_3000']
-cost_yml = [''] * len(ship_types)
-spec_each = [''] * len(ship_types)    
-
+# ship_types = ['ship_1', 'ship_2', 'ship_3', 'ship_4', 'ship_5']
+# cost_types = ['cost_99', 'cost_199', 'cost_499', 'cost_749', 'cost_3000']
 
 def multiple_run():
     '''
     Settings
     '''    
     fleet_type = 'domestic'
+
+    if fleet_type == 'domestic':
+        fleet_yml = get_yml('fleet_domestic')
+    elif fleet_type == 'international':
+        fleet_yml = get_yml('fleet_international')
+
+    ship_types = list(fleet_yml)
+    cost_types = [f'cost_{fleet_yml[ship]["ship_size"]}' for ship in fleet_yml]
+    cost_yml = [''] * len(ship_types)
+    spec_each = [''] * len(ship_types)    
+
     start_year, end_year = 2022, 2050
     ship_age = 25
     dt_year = 50
@@ -179,15 +187,16 @@ def multiple_run():
      
         set_tech(ope_safety_b, ope_TRL_factor)
         set_scenario(
-            start_year, end_year, numship_growth_list, ship_age, 
+            start_year, end_year, 
+            # numship_growth_list, ship_age, 
             economy, safety, estimated_loss, subsidy_RandD, subsidy_Adoption, TRLreg, 
-            Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop, fleet_type)
+            Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop) #, fleet_type)
         scenario_yml = get_yml('scenario')
-        current_fleet, num_newbuilding, ship_age_list, ship_size_list  = get_scenario(scenario_yml, ship_types, fleet_type)
+        current_fleet, num_newbuilding, ship_age_list, ship_size_list  = get_scenario(scenario_yml, fleet_yml, ship_types, fleet_type)
 
         Owner = ShipOwner('Owner', economy, safety, current_fleet, num_newbuilding, estimated_loss)
-        Manufacturer = Investor()
-        Regulator = PolicyMaker()
+        Manufacturer = Investor('Manufacturer')
+        Regulator = PolicyMaker('Regulator')
     
         tech_yml = get_yml('tech')
         ship_spec_yml = get_yml('ship_spec')
@@ -216,7 +225,7 @@ def multiple_run():
             spec_current = [''] * len(cost_types)
             # Iteration for ship_type
             for j in range(len(ship_types)):
-                spec_current[j]= calculate_cost(ship_spec_yml, cost_yml[j], start_year+i, tech, acc_navi_semi, config_list, fuel_rate, crew_cost_rate, insurance_rate, ship_per_scccrew)
+                spec_current[j]= calculate_cost(ship_spec_yml, cost_yml[j], start_year+i, tech, acc_navi_semi, fuel_rate, crew_cost_rate, insurance_rate, ship_per_scccrew)
                 select = Owner.select_ship(spec_current[j], tech, TRLreg)
                 Owner.purchase_ship(config_list, select, i, start_year, ship_size_list[j], ship_types[j])
                 select_index.append(select) # tentative

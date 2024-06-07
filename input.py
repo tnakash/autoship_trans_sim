@@ -106,3 +106,37 @@ def save_uploaded_file(uploaded_file, save_folder):
     with open(file_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
     return file_path
+
+
+def set_tech(ope_safety_b, ope_TRL_factor):
+    with open(homedir + "yml/tech.yml", "w") as yf: # Google Colab用に変更
+        yaml.dump({
+            "Berth": {
+                "min_cost": 34000, 
+                "TRL_ini": 6,
+                "accident": 0.0064
+            },
+            "Navi": {
+                "min_cost": 34000, 
+                "TRL_ini": 3,
+                "accident": 0.0094
+            },
+            "Moni": {
+                "min_cost": 136000, 
+                "TRL_ini": 4,
+                "accident": 0.029
+            },
+            "Others": {
+                "tech_integ_factor": 1.33,
+                "integ_a": 725333, # not in use
+                "integ_b": 0.05,
+                "ope_max": 10000, # [times (year*ship)] not in use
+                "manu_max": 150, # [times (ship)] not in use
+                "ope_safety_b": ope_safety_b, # ope_max -> 1/2
+                "ope_TRL_factor": ope_TRL_factor, # [USD/times]
+                "rd_TRL_factor": 1, # [USD/y]
+                "rd_need_TRL": 20000000, # [USD/TRL]
+                "randd_base": 0, # [USD/y]
+                "acc_reduction_full": 0.8 # Human Erron Rate [-]
+            }
+        }, yf, default_flow_style=False)

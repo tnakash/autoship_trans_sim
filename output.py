@@ -1,13 +1,8 @@
-import altair as alt
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import streamlit as st
 import pandas as pd
-import numpy as np
-from adjustText import adjust_text
-import seaborn as sns
-
 
 # Define custom colormap
 cmap_colors = [

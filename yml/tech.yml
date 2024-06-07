@@ -15,7 +15,7 @@ Others:
   integ_a: 725333
   integ_b: 0.05
   manu_max: 150
-  ope_TRL_factor: 10000
+  ope_TRL_factor: 1000
   ope_max: 10000
   ope_safety_b: 0.2
   randd_base: 0
