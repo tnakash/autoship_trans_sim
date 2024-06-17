@@ -57,7 +57,7 @@ def main():
     st.markdown('#### 1. Scenario Setting')
     
     st.write('1.1 Basic Setting')
-    fleet_type = st.selectbox('Fleet Type', ('domestic', 'international'))
+    fleet_type = st.selectbox('Fleet Type', ('APEX', 'domestic', 'international'))
     casename = st.text_input('Casename', value='240123')
 
     start_year, end_year = st.slider('Simulation Year', 2020, 2070, (2023, 2050))
@@ -72,6 +72,9 @@ def main():
     elif fleet_type == 'international':
         growth_scenario = 'Average'
         fleet_yml = get_yml('fleet_international')
+    elif fleet_type == 'APEX':
+        growth_scenario = 'Average'
+        fleet_yml = get_yml('fleet_Apex')
 
     ship_types = list(fleet_yml)
     cost_types = [f'cost_{fleet_yml[ship]["ship_size"]}' for ship in fleet_yml]
