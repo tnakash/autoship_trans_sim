@@ -1,0 +1,5 @@
+ship_1:
+  annual_growth: 1.01
+  initial_number: 1000
+  ship_age: 25
+  ship_size: "4_Apex"
