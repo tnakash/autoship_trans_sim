@@ -252,7 +252,7 @@ def consider_TRL_regulation(select_parameter, TRL, TRLreg):
     return select_parameter
 
 class PolicyMaker():
-    def __init__(self, name):
+    def __init__(self, name, TRLreg):
         self.name = name
         self.sub_RandD = 0
         self.sub_Adoption = 0
@@ -260,6 +260,7 @@ class PolicyMaker():
         self.sub_select = 0
         self.sub_used = 0
         self.sub_per_ship = 0
+        self.TRLreg = TRLreg
 
     def reset(self, sub_RandD, sub_Adoption, sub_Experience, trial_times):
         self.sub_RandD = sub_RandD
@@ -275,15 +276,15 @@ class PolicyMaker():
         self.sub_used += self.sub_RandD
     
     # Need to be rewritten
-    def select_for_sub_adoption(self, spec, tech, TRLreg):
+    def select_for_sub_adoption(self, spec, tech):
         for i in range(len(spec)-1, 0, -1):
-            if (tech.TRL[0] >= TRLreg or spec.Berth[i] == 0) and ((tech.TRL[1] >= TRLreg or spec.Navi[i] == 0) or (tech.TRL[1] >= TRLreg - semi_auto_TRLgap and spec.Navi[i] == 1)) and (tech.TRL[2] >= TRLreg or spec.Moni[i] == 0):
+            if (tech.TRL[0] >= self.TRLreg or spec.Berth[i] == 0) and ((tech.TRL[1] >= self.TRLreg or spec.Navi[i] == 0) or (tech.TRL[1] >= self.TRLreg - semi_auto_TRLgap and spec.Navi[i] == 1)) and (tech.TRL[2] >= self.TRLreg or spec.Moni[i] == 0):
                 self.sub_select = i
                 break
     
-    def subsidize_experience(self, tech, TRLreg):
+    def subsidize_experience(self, tech):
         for i in range(len(tech.TRL)):
-            if tech.TRL[i] < TRLreg:
+            if tech.TRL[i] < self.TRLreg:
                 tech.loc[i, ["Mexp"]] += self.sub_Experience / (tech.tech_cost[i] * self.trial_times) / len(tech.TRL)
                 tech.loc[i, ["Oexp"]] += self.sub_Experience / (tech.tech_cost[i] * self.trial_times) / len(tech.TRL)
                 self.sub_used += self.sub_Experience

@@ -8,7 +8,8 @@ import os
 import pandas as pd
 import random as rd
 from Agent import Investor, PolicyMaker, ShipOwner
-from calculate import (
+from World import (
+    World,
     calculate_cost, 
     calculate_tech, 
     calculate_TRL_cost, 
@@ -194,6 +195,7 @@ def multiple_run():
         scenario_yml = get_yml('scenario')
         current_fleet, num_newbuilding, ship_age_list, ship_size_list  = get_scenario(scenario_yml, fleet_yml, ship_types, fleet_type)
 
+        Simulator = World()
         Owner = ShipOwner('Owner', economy, safety, current_fleet, num_newbuilding, estimated_loss)
         Manufacturer = Investor('Manufacturer')
         Regulator = PolicyMaker('Regulator')
@@ -219,13 +221,13 @@ def multiple_run():
 
             Regulator.subsidize_investment(Manufacturer)
             tech = Manufacturer.invest(tech, Regulator)
-            tech = calculate_tech(tech, Owner.fleet, share_rate_O, share_rate_M, start_year+i-1, scaling_factor)
-            tech, acc_navi_semi = calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
+            tech = Simulator.calculate_tech(tech, Owner.fleet, share_rate_O, share_rate_M, start_year+i-1, scaling_factor)
+            tech, acc_navi_semi = Simulator.calculate_TRL_cost(tech, param, Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
             
             spec_current = [''] * len(cost_types)
             # Iteration for ship_type
             for j in range(len(ship_types)):
-                spec_current[j]= calculate_cost(ship_spec_yml, cost_yml[j], start_year+i, tech, acc_navi_semi, fuel_rate, crew_cost_rate, insurance_rate, ship_per_scccrew)
+                spec_current[j]= Simulator.calculate_cost(ship_spec_yml, cost_yml[j], start_year+i, tech, acc_navi_semi, fuel_rate, crew_cost_rate, insurance_rate, ship_per_scccrew)
                 select = Owner.select_ship(spec_current[j], tech, TRLreg)
                 Owner.purchase_ship(config_list, select, i, start_year, ship_size_list[j], ship_types[j])
                 select_index.append(select) # tentative
