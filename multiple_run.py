@@ -185,7 +185,7 @@ def multiple_run():
             numship_growth_list = [1., 1., 1., 1.0975, 1.0975]
         else:
             numship_growth_list = [ship_growth] * len(ship_types)
-     
+
         set_tech(ope_safety_b, ope_TRL_factor)
         set_scenario(
             start_year, end_year, 
