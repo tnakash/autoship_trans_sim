@@ -7,3 +7,4 @@ matplotlib
 zipp
 seaborn
 adjustText
+pygwalker
