@@ -8,13 +8,8 @@ import os
 import pandas as pd
 import random as rd
 from Agent import Investor, PolicyMaker, ShipOwner
-from World import (
-    World,
-    calculate_cost, 
-    calculate_tech, 
-    calculate_TRL_cost, 
-    get_tech_ini
-)
+from TechAsset import Technology, Vehicle
+from World import World
 from input import (
     get_scenario, 
     get_yml, 
@@ -195,15 +190,23 @@ def multiple_run():
         scenario_yml = get_yml('scenario')
         current_fleet, num_newbuilding, ship_age_list, ship_size_list  = get_scenario(scenario_yml, fleet_yml, ship_types, fleet_type)
 
-        Simulator = World()
+        Simulator = World(casename, fleet_type, start_year, end_year, scaling_factor)
+
         Owner = ShipOwner('Owner', economy, safety, current_fleet, num_newbuilding, estimated_loss)
         Manufacturer = Investor('Manufacturer')
-        Regulator = PolicyMaker('Regulator')
+        Regulator = PolicyMaker('Regulator', TRLreg)
     
         tech_yml = get_yml('tech')
         ship_spec_yml = get_yml('ship_spec')
         config_list = list(ship_spec_yml)
-        tech, param = get_tech_ini(tech_yml, uncertainty, TRL_Berth, TRL_Navi, TRL_Moni)
+
+        # tech, param = get_tech_ini(tech_yml, uncertainty, TRL_Berth, TRL_Navi, TRL_Moni)
+        # ----------------------------------
+        # Instantiate Technology(s)
+        # ----------------------------------
+        Tech = Technology()
+        Tech.get_tech_ini(tech_yml, uncertainty, TRL_Berth, TRL_Navi, TRL_Moni)
+
         select_index = []
 
         for i in range(len(cost_types)):

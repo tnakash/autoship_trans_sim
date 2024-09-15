@@ -12,4 +12,4 @@ Regulator:
   subsidy_randd: 5000000
 sim_setting:
   end_year: 2050
-  start_year: 2023
+  start_year: 2022
