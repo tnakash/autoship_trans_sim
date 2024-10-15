@@ -67,8 +67,8 @@ def main():
     st.markdown('#### 1. Scenario Setting')
     
     st.write('1.1 Basic Setting')
-    fleet_type = st.selectbox('Fleet Type', ('APEX', 'domestic', 'international'))
-    casename = st.text_input('Casename', value='240123')
+    fleet_type = st.selectbox('Fleet Type', ('domestic', 'international', 'APEX'))
+    casename = st.text_input('Casename', value='241014')
 
     # World/Environment
     start_year, end_year = st.slider('Simulation Year', 2020, 2070, (2023, 2050))
@@ -118,8 +118,8 @@ def main():
     
     st.sidebar.markdown('### 2.1 Ship Owner')
     st.sidebar.write("Parameters for ship adoption")
-    estimated_loss = ship_age # st.sidebar.number_input('Estimated Accident Loss Amount (compared to annual CAPEX) [times]', value = 25) 
-    economy = 1  # st.sidebar.slider('Profitability weight[-]', 0.0, 1.0, 1.0)
+    estimated_loss = ship_age
+    economy = 1
     safety = st.sidebar.slider('Safety weight Compared to Profitability', 0, 10, 1)
     
     # num_ship_owners = st.slider('Number of Ship Owners', 1, 5, 1)
@@ -376,9 +376,6 @@ def main():
             'OPEX': 'sum',
             'VOYEX': 'sum',
             'AddCost': 'sum',
-            'accident_berth': 'sum',
-            'accident_navi': 'sum',
-            'accident_moni': 'sum',
             'accident_berth': 'sum',
             'accident_navi': 'sum',
             'accident_moni': 'sum',
