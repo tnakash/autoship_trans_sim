@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
 # Define custom colormap
 cmap_colors = [
@@ -244,4 +245,34 @@ def process_ship_data(grouped_data, ship_type, config_list, title_suffix, dir_fi
     grouped_data_ship = grouped_data_ship.rename(columns={'index': 'year'})
     grouped_data_ship.reset_index(drop=True, inplace=True)
 
-    show_stacked_bar(grouped_data_ship, config_list, f"Number of Ships by Configuration ({title_suffix}) [ship]", dir_fig, 'config')
+    show_stacked_bar_plotly(grouped_data_ship, config_list, f"Number of Ships by Configuration ({title_suffix}) [ship]", dir_fig, 'config')
+
+
+def show_stacked_bar_plotly(result, label, title, directory, cmap = None):
+    # データフレームを「長い形式」に変換
+    melted = result.melt(id_vars=["year"], value_vars=label, var_name="Category", value_name="Value")
+    
+    # Plotly Express を使ってスタックバーグラフを作成
+    fig = px.bar(
+        melted,
+        x="year",
+        y="Value",
+        color="Category",
+        title=title,
+        labels={"year": "Year", "Value": "Value", "Category": "Category"},
+    )
+    
+    # レイアウト調整
+    fig.update_layout(
+        title={"x": 0.5, "font": {"size": 16}},
+        xaxis={"tickangle": 45, "tickfont": {"size": 14}},
+        yaxis={"tickfont": {"size": 14}},
+        legend={"font": {"size": 14}, "title": None},
+        margin={"l": 20, "r": 20, "t": 50, "b": 20},
+    )
+    
+    # Streamlit上で描画
+    st.plotly_chart(fig)
+    
+    # # グラフを静的ファイルとして保存
+    # fig.write_image(directory + '/' + title + '.png')

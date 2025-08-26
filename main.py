@@ -21,6 +21,7 @@ from output import (
     show_tradespace_general,
     show_stacked_bar,
     process_ship_data,
+    show_stacked_bar_plotly,
 )
 
 '''
@@ -73,7 +74,7 @@ def main():
     # World/Environment
     start_year, end_year = st.slider('Simulation Year', 2020, 2070, (2023, 2050))
     numship_growth = st.slider('Annual growth rate of ship demand[-]', 0.900, 1.100, 1.01) # 1.072 for Average
-    scaling_factor = st.slider('To save the simulation time, reduce the number of ship and people to 1/X', 1, 10, 1)
+    scaling_factor = st.slider('To save the simulation time, reduce the number of ship and people to 1/X', 1, 10, 10)
 
     if fleet_type == 'domestic':
         # Special setting for "Double in 10 years"
@@ -110,9 +111,9 @@ def main():
     retrofit_cost = st.number_input('Retrofit Cost rate per annual cost [-]', value = 0.01)
     retrofit_limit = st.number_input('Retrofit limit per year [ship/year]', value = 1000)
     
-    TRL_Berth = st.number_input('Neccessary R&D for Technology Readiness of Berthing (USD/TRL)', value = 20000000)
-    TRL_Navi = st.number_input('Neccessary R&D for Technology Readiness of Navigation (USD/TRL)', value = 20000000)
-    TRL_Moni = st.number_input('Neccessary R&D for Technology Readiness of Monitoring (USD/TRL)', value = 20000000)
+    TRL_Berth = st.slider('Neccessary R&D for Technology Readiness of Berthing (USD/TRL)', 0, 30000000, 20000000, 1000000)
+    TRL_Navi = st.slider('Neccessary R&D for Technology Readiness of Navigation (USD/TRL)', 0, 30000000, 20000000, 1000000)
+    TRL_Moni = st.slider('Neccessary R&D for Technology Readiness of Monitoring (USD/TRL)', 0, 30000000, 20000000, 1000000)
     
     st.sidebar.markdown('## 2. Agent Parameter Setting')
     
@@ -138,30 +139,23 @@ def main():
     st.sidebar.markdown('### 2.2 Manufacturer (R&D Investor))')
     st.sidebar.write("Technology type and Amount of investment")    
     invest_tech = st.sidebar.selectbox("Investment Strategy", ["All", "Berth", "Navi", "Moni"])
-    invest_amount = st.sidebar.number_input('Investment Amount [USD/year]', value = 5000000)
+    invest_amount = st.sidebar.slider('Investment Amount [USD/year]', 0, 10000000, 5000000, 1000000)
 
     st.sidebar.markdown('### 2.3 Policy Maker')
     st.sidebar.write("Type and amount of subsidy")
-    subsidy_RandD = st.sidebar.number_input('Subsidy Amount (R&D)[USD/year]', value = 5000000)
-    subsidy_Adoption = st.sidebar.number_input('Subsidy Amount (Adoption)[USD/year]', value = 0)
-    subsidy_Experience = st.sidebar.number_input('Subsidy Amount for Prototyping [USD/year]', value = 0)
+    subsidy_RandD = st.sidebar.slider('Subsidy Amount (R&D)[USD/year]', 0, 10000000, 5000000, 1000000)
+    subsidy_Adoption = st.sidebar.slider('Subsidy Amount (Adoption)[USD/year]', 0, 10000000, 0, 1000000)
+    subsidy_Experience = st.sidebar.slider('Subsidy Amount for Prototyping [USD/year]', 0, 10000000, 0, 1000000)
     trial_times = 1  # number of trials for getting one experience
-    TRLreg = st.sidebar.selectbox('TRL regulation (minimum TRL for deployment)', (8, 7))
-
-    # # growth_scenario
-    # if growth_scenario == 'Small':
-    #     numship_growth_list = [1.145, 1.145, 1.145, 1., 1.]
-    # elif growth_scenario == 'Large':
-    #     numship_growth_list = [1., 1., 1., 1.0975, 1.0975]
-    # else:
-    #     numship_growth_list = [numship_growth] * len(list(fleet_yml))
+    deregulation_timing = st.sidebar.slider('TRL regulation relaxation time', 2025, 2040, 2030, 1)
+    initial_regulation = 8
 
     # ---------------------------------------------------
     # Set scenario and cost, ship, spec, tech parameters
     # ---------------------------------------------------
     set_scenario(
         start_year, end_year, 
-        economy, safety, estimated_loss, subsidy_RandD, subsidy_Adoption, TRLreg, 
+        economy, safety, estimated_loss, subsidy_RandD, subsidy_Adoption, initial_regulation, 
         Mexp_to_production_loop, Oexp_to_TRL_loop, Oexp_to_safety_loop)
 
     scenario_yml = get_yml('scenario')
@@ -217,7 +211,7 @@ def main():
     # Owner_1 = ShipOwner('Owner_1', economy, safety, current_fleet, num_newbuilding, estimated_loss)
     # Owner_2 = ShipOwner('Owner_2', economy, safety, current_fleet, num_newbuilding, estimated_loss)
     Manufacturer = Investor('Manufacturer_1')
-    Regulator = PolicyMaker('Regulator_1', TRLreg)
+    Regulator = PolicyMaker('Regulator_1', initial_regulation)
 
     # ---------------------------------------------------
     # Start Simulation
@@ -250,6 +244,8 @@ def main():
                 Owner.one_step(start_year+i)
                 # Owner_1.one_step(start_year+i)
                 # Owner_2.one_step(start_year+i)
+            if start_year + i == deregulation_timing:
+                Regulator.TRLreg = initial_regulation - 1 # 7
 
             # Owner_fleet = pd.concat([Owner_1.fleet, Owner_2.fleet])
 
@@ -347,7 +343,7 @@ def main():
         grouped_data = merged_data.groupby(['year', 'config', 'ship_type']).agg({
             'ship_id': 'count',
             }).reset_index()
-        grouped_data['ship_id'] *= scaling_factor
+        # grouped_data['ship_id'] *= scaling_factor
 
         # Reshape the data
         grouped_data_pivot = grouped_data.pivot_table(index=['year'], columns='config', values='ship_id', aggfunc='sum', fill_value=0)
@@ -358,7 +354,7 @@ def main():
         grouped_data_pivot.reset_index(inplace=True)
         grouped_data_pivot = grouped_data_pivot.rename(columns={'index': 'year'})
         grouped_data_pivot.reset_index(drop=True, inplace=True)
-        show_stacked_bar(grouped_data_pivot, config_list, "Number of Ships by Configuration [ship]", DIR_FIG, 'config')
+        show_stacked_bar_plotly(grouped_data_pivot, config_list, "Number of Ships by Configuration [ship]", DIR_FIG, 'config')
  
 
         if fleet_type == 'domestic':
@@ -369,7 +365,7 @@ def main():
         grouped_data_ship_type.reset_index(inplace=True)
         grouped_data_ship_type = grouped_data_ship_type.rename(columns={'index': 'year'})
         grouped_data_ship_type.reset_index(drop=True, inplace=True)
-        show_stacked_bar(grouped_data_ship_type, Ship.ship_types, "Number of Ships by Ship Type [ship]", DIR_FIG, 'ship_type')
+        show_stacked_bar_plotly(grouped_data_ship_type, Ship.ship_types, "Number of Ships by Ship Type [ship]", DIR_FIG, 'ship_type')
                 
         summary = merged_data.groupby('year').agg({
             'CAPEX': 'sum',
@@ -387,10 +383,10 @@ def main():
              }).reset_index()
 
         summary_copy = summary.copy()
-        summary_copy.loc[:, summary_copy.columns != 'year'] *= scaling_factor
-        show_stacked_bar(summary_copy, cost_list, "Total cost of fleet [USD]", DIR_FIG)
-        show_stacked_bar(summary_copy, accident_list, "Number of Accidents", DIR_FIG)
-        show_stacked_bar(summary_copy, crew_list, "Number of Seafarers [people]", DIR_FIG, 'crew')
+        # summary_copy.loc[:, summary_copy.columns != 'year'] *= scaling_factor
+        show_stacked_bar_plotly(summary_copy, cost_list, "Total cost of fleet [USD]", DIR_FIG)
+        show_stacked_bar_plotly(summary_copy, accident_list, "Number of Accidents", DIR_FIG)
+        show_stacked_bar_plotly(summary_copy, crew_list, "Number of Seafarers [people]", DIR_FIG, 'crew')
 
         # Save Tentative File for iterative simulation (and final results)
         spec.to_csv(DIR+'/spec_'+casename+'.csv')

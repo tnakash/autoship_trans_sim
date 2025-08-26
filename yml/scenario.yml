@@ -8,8 +8,8 @@ Operator:
   safety: 1
 Regulator:
   TRL_regulation: 8
-  subsidy_adoption: 0
-  subsidy_randd: 5000000
+  subsidy_adoption: 1000000
+  subsidy_randd: 3000000
 sim_setting:
   end_year: 2050
-  start_year: 2023
+  start_year: 2022

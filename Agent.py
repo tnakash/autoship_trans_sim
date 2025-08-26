@@ -119,12 +119,17 @@ class ShipOwner:
         list = self.fleet.loc[(self.fleet['year_built'] == start_year + year) & (self.fleet['DWT'] == ship_size)]
         self.fleet = self.fleet.drop(self.fleet.loc[(self.fleet['year_built'] == start_year + year) & (self.fleet['DWT'] == ship_size)].index)
         for i in range(int(num_subsidized_ship)):
-            list.iloc[i]['config'] = config_list[PolicyMaker.sub_select]
-            list.iloc[i]['berthing'] = berth
-            list.iloc[i]['navigation'] = navi
-            list.iloc[i]['monitoring'] = moni
-            list.iloc[i]['misc'] = 'newbuilt_subsidized'
-            
+            # list.iloc[i]['config'] = config_list[PolicyMaker.sub_select]
+            # list.iloc[i]['berthing'] = berth
+            # list.iloc[i]['navigation'] = navi
+            # list.iloc[i]['monitoring'] = moni
+            # list.iloc[i]['misc'] = 'newbuilt_subsidized'
+            list.loc[i, 'config'] = config_list[PolicyMaker.sub_select]
+            list.loc[i, 'berthing'] = berth
+            list.loc[i, 'navigation'] = navi
+            list.loc[i, 'monitoring'] = moni
+            list.loc[i, 'misc'] = 'newbuilt_subsidized'
+
         self.fleet = pd.concat([self.fleet, list], ignore_index= True)
 
 
